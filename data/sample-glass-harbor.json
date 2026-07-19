@@ -116,7 +116,7 @@
     }
   ],
   "chronOrder": ["sc_h1", "sc_h2", "sc_h3", "sc_i1", "sc_i2", "sc_s1", "sc_s2", "sc_i3", "sc_i4", "sc_s3", "sc_i5", "sc_i6"],
-  "msOrder": ["sc_i1", "sc_h1", "sc_i2", "sc_s1", "sc_i3", "sc_s2", "sc_h2", "sc_i4", "sc_h3", "sc_s3", "sc_i5", "sc_i6"],
+  "msOrder": ["sc_i1", "sc_h1", "sc_i2", "sc_s1", "sc_s2", "sc_i3", "sc_h2", "sc_i4", "sc_h3", "sc_s3", "sc_i5", "sc_i6"],
   "markers": [
     { "id": "mk_1998", "label": "1998 — TEN YEARS EARLIER", "beforeSceneId": "sc_h1" },
     { "id": "mk_2008", "label": "2008 — PRESENT DAY", "beforeSceneId": "sc_i1" }

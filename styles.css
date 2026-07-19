@@ -432,3 +432,24 @@ body.flagging .scene:not(.flag), body.flagging .msCard:not(.flag) { opacity: .25
 .projList { display: flex; flex-direction: column; gap: 5px; margin-bottom: 6px; }
 .projListRow { display: flex; align-items: center; gap: 6px; }
 .projListRow input { flex: 1; }
+
+/* ==================================================================
+   Braid view (M8, §9.5) — read-only structure chart
+   ================================================================== */
+
+/* Scoped to `.active` (not a bare #braidSection rule) — an ID selector would beat
+   .viewMode.active's `display:block` toggle (§3.2's view-mode show/hide) regardless of
+   source order, since ID specificity always wins over a class pair; that would leave
+   the braid section visibly `display:flex` even while another view mode is active. */
+#braidSection.active { flex: 1; display: flex; flex-direction: column; min-height: 0; padding: 10px 16px; }
+#braidScroll {
+  flex: 1; min-height: 0; overflow-x: auto; overflow-y: auto;
+}
+#braidSvg { display: block; }
+
+.braidNode circle { transition: stroke-width .15s; }
+.braidNode.hi circle { stroke-width: 5; }
+.braidNode.sel circle { stroke: var(--thread) !important; stroke-width: 4; }
+.braidNode.flag circle { stroke: var(--red) !important; }
+body.hovering .braidNode:not(.hi) { opacity: .28; }
+body.flagging .braidNode:not(.flag) { opacity: .25; }

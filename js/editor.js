@@ -21,6 +21,7 @@ function refreshAll() {
   refreshThreadPicker();
   if (typeof renderChron === 'function') renderChron();
   if (typeof renderManuscript === 'function') renderManuscript();
+  if (typeof renderBraid === 'function') renderBraid();
   // Re-render the inspector for whatever is currently selected (§5.2: saveProject()'s
   // refreshAll() re-renders "both views, wires, conflicts, inspector") — every field
   // edit funnels through commit()->saveProject()->refreshAll(), so without this the

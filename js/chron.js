@@ -484,8 +484,8 @@ function renderChronGapDivider(layer, xMap) {
 
 function selectScene(sceneId, opts) {
   _chronSelectedSceneId = sceneId;
-  document.querySelectorAll('.scene, .msCard').forEach(function (el) {
-    el.classList.toggle('sel', el.dataset.sceneId === sceneId);
+  document.querySelectorAll('.scene, .msCard, .braidNode').forEach(function (el) {
+    el.classList.toggle('sel', el.getAttribute('data-scene-id') === sceneId);
   });
   if (typeof renderInspectorSelection === 'function') renderInspectorSelection(sceneId, opts);
   if (sceneId && typeof scrollCounterpartIntoView === 'function') scrollCounterpartIntoView(sceneId);

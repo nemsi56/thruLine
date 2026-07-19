@@ -23,6 +23,7 @@
   if (typeof initChronTrackListeners === 'function') initChronTrackListeners();
   if (typeof initManuscriptRowListeners === 'function') initManuscriptRowListeners();
   if (typeof initWireScrollListeners === 'function') initWireScrollListeners();
+  if (typeof initBraidScrollListeners === 'function') initBraidScrollListeners();
   refreshAll();
 
   // zoom slider (§7.6) — pxPerScene, 70-200, persisted in viewPrefs; re-render both
@@ -48,7 +49,13 @@
     if (stageEl) {
       var _wiresRO = new ResizeObserver(function () {
         clearTimeout(_wiresRO._t);
-        _wiresRO._t = setTimeout(redrawWires, 150);
+        _wiresRO._t = setTimeout(function () {
+          redrawWires();
+          // Braid's rowH is derived from the stage/scroll-container height (§9.5), so it
+          // needs the same resize-triggered redraw as wires — plain window `resize`
+          // alone misses divider drags / panel collapse (§3's ResizeObserver pitfall).
+          if (typeof renderBraid === 'function') renderBraid();
+        }, 150);
       });
       _wiresRO.observe(stageEl);
     }
@@ -81,6 +88,12 @@
     savePrefs(pr);
     document.documentElement.setAttribute('data-theme', pr.theme);
     document.getElementById('themeToggle').textContent = pr.theme === 'light' ? '☀' : '☾';
+    // §3.3: "switching themes triggers a full refreshAll() so every card, wire,
+    // thread, and braid node repaints" — storyline colors (slColor()) and the braid's
+    // literal flashback-accent hex are baked into inline styles/SVG attributes at
+    // render time, so anything already on screen would otherwise stay stale until some
+    // OTHER action happened to re-render it.
+    if (typeof refreshAll === 'function') refreshAll();
   });
 
   // panel tabs
