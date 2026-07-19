@@ -1,4 +1,4 @@
-# ThruLiner v1 — Implementation Spec
+# ThruLine v1 — Implementation Spec
 
 **Audience:** an implementing model/developer building this app from scratch. Follow this
 document exactly. Where the spec is silent, prefer the simplest implementation that
@@ -13,7 +13,7 @@ throwaway code — copy their *look*, not their implementation):
   layout, serif typography, and margin-note conflict presentation are NOT part of this
   app (see §19).
 
-**Product summary:** ThruLiner is a structure tool for story writers. Every scene has
+**Product summary:** ThruLine is a structure tool for story writers. Every scene has
 two independent positions: a **chronological** one (when it happens in the story world)
 and a **manuscript** one (when the reader encounters it). The editor shows both timelines
 at once with curved "wires" connecting each scene's two positions. A passive conflict
@@ -591,7 +591,7 @@ Escape clears it. Warn-dots on cards reflect membership in any non-dismissed con
 
 ### 13.1 Export
 
-Download `<project-name>.thruliner.json` — the full project blob, pretty-printed.
+Download `<project-name>.thruline.json` — the full project blob, pretty-printed.
 (Cmd/Ctrl+E and the ⋯ menu.)
 
 ### 13.2 Import (index.html and the ⋯ menu)
@@ -738,9 +738,9 @@ collaboration/sync · AI features · backup-reminder nudges · print/reports ·
 v1.x; §7.6's scroll layout must not block it) · minimap · custom storyline colors ·
 the writers-desk mockup's vertical layout, serif typography, and margin-note conflict
 presentation (its palette is used for the light theme; nothing else) ·
-**SceneSetter interchange** (planned v1.x, both directions: SceneSetter→ThruLiner maps
+**SceneSetter interchange** (planned v1.x, both directions: SceneSetter→ThruLine maps
 board order to both orders, sections→dividers, characters/locations→same;
-ThruLiner→SceneSetter maps msOrder→board order, dividers→sections; lossless
+ThruLine→SceneSetter maps msOrder→board order, dividers→sections; lossless
 round-tripping additionally requires SceneSetter to preserve a namespaced
-`x_thruliner` blob through its own import/export — a future SceneSetter-side change.
+`x_thruline` blob through its own import/export — a future SceneSetter-side change.
 Do not implement any of this now, but do not make schema choices that would block it).

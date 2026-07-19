@@ -226,7 +226,27 @@ braid"). Outcomes:
 5. **Design A is the primary workspace.** B is not built as a layout; its paper palette
    becomes the LIGHT THEME (dark + light both ship in v1, same sans typography as A —
    no serif). C ships as a read-only fourth view mode ("Braid") — cheap, high value.
-6. **Name: ThruLiner** (working). Spec renamed to `THRULINER_V1_SPEC.md`.
+6. **Name: ThruLiner** (working) — later renamed to **ThruLine** (see §12). Spec file:
+   `THRULINE_V1_SPEC.md`.
+
+## 12. Decisions round three (July 18, 2026)
+
+12. **Name finalized: ThruLine** (was "ThruLiner"). Renamed throughout: spec file
+    (`THRULINE_V1_SPEC.md`), page titles, export file extension (`.thruline.json`), the
+    planned SceneSetter round-trip blob (`x_thruline`). GitHub repo already matched:
+    `github.com/nemsi56/thruLine`.
+13. **Sample-seeding bug fixed** (found while smoke-testing M1–M2): the "already
+    seeded" flag was set *before* the fetch resolved, so a first-run failure (e.g. the
+    fetch being blocked, as happens under a `file://` origin) locked the app out of ever
+    seeding the sample project again. Fixed with a short-lived timestamped lock —
+    `samplesSeeded` only becomes true on actual success; a stale, failed lock retries
+    on the next load. **Also confirmed the app must be served over `http://`, never
+    opened as a `file://` path** — `file://` blocks the sample-data fetch and shares one
+    undifferentiated localStorage bucket across unrelated local files/apps. A
+    `ThruLine`-named dev server entry was added to `.claude/launch.json` (plus a
+    no-cache variant, `ThruLine-nocache`, since the plain Python server's lack of cache
+    headers was observed to serve stale JS after edits — same tooling quirk documented
+    in SceneSetter's history).
 7. **One card type + "offscreen" flag** (no separate event entity). Audience: novelists
    first.
 8. **Storyline convergence:** a scene has one HOME storyline (its lane) plus optional
@@ -236,9 +256,9 @@ braid"). Outcomes:
    bounded zoom (70–200 px/scene), wires tracking scroll, and counterpart auto-scroll
    on selection. A true split-pane over the chronology is a named v1.x follow-up, as is
    a minimap.
-10. **SceneSetter relationship:** ThruLiner ships standalone; two-way interchange is
+10. **SceneSetter relationship:** ThruLine ships standalone; two-way interchange is
     designed but deferred (v1.x). Lossless round-tripping will require SceneSetter to
-    preserve an `x_thruliner` blob through its import/export — SG will make that
+    preserve an `x_thruline` blob through its import/export — SG will make that
     SceneSetter-side change later, when making the apps interactive. Same-origin
     hosting can eventually let both apps share localStorage ("jump between apps").
 11. **Conflicts stay non-AI:** user-declared reveals/requires + set arithmetic over

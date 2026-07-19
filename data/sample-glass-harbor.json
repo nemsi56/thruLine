@@ -1,0 +1,129 @@
+{
+  "schemaVersion": 1,
+  "projectUid": "pr_sample_glassharbor",
+  "name": "The Glass Harbor",
+  "createdAt": "2026-07-18T00:00:00.000Z",
+  "modifiedAt": "2026-07-18T00:00:00.000Z",
+  "revision": 1,
+  "storylines": [
+    { "id": "st_investigation", "name": "Investigation", "paletteIndex": 0 },
+    { "id": "st_heist", "name": "The Heist", "paletteIndex": 1 },
+    { "id": "st_politics", "name": "Harbor Politics", "paletteIndex": 2 }
+  ],
+  "characters": [
+    { "id": "ch_reyes", "name": "Det. Reyes" },
+    { "id": "ch_elena", "name": "Elena Vasquez" },
+    { "id": "ch_marcus", "name": "Marcus Webb" },
+    { "id": "ch_aldana", "name": "Councilwoman Aldana" }
+  ],
+  "locations": [
+    { "id": "lo_harbor", "name": "The Harbor" },
+    { "id": "lo_warehouse", "name": "The Old Warehouse" },
+    { "id": "lo_cityhall", "name": "City Hall" },
+    { "id": "lo_docks", "name": "The Docks" }
+  ],
+  "reveals": [
+    { "id": "rv_heist", "label": "the-heist" },
+    { "id": "rv_betrayal", "label": "the-betrayal" },
+    { "id": "rv_fire", "label": "the-fire" },
+    { "id": "rv_elena_alive", "label": "elena-alive" }
+  ],
+  "constraints": [],
+  "scenes": [
+    {
+      "id": "sc_h1", "title": "The Vault Job", "summary": "Marcus and Elena pull the job that starts it all.",
+      "storylineId": "st_heist", "alsoStorylineIds": [], "characterIds": ["ch_marcus", "ch_elena"],
+      "locationId": "lo_warehouse", "offscreen": false,
+      "anchor": { "date": "1998-10-12", "time": null }, "durationMin": null,
+      "reveals": ["rv_heist"], "requires": []
+    },
+    {
+      "id": "sc_h2", "title": "The Betrayal", "summary": "Marcus turns on his own crew.",
+      "storylineId": "st_heist", "alsoStorylineIds": [], "characterIds": ["ch_marcus", "ch_elena"],
+      "locationId": "lo_warehouse", "offscreen": false,
+      "anchor": { "date": "1998-10-25", "time": null }, "durationMin": null,
+      "reveals": ["rv_betrayal"], "requires": []
+    },
+    {
+      "id": "sc_h3", "title": "The Fire", "summary": "The warehouse burns; Elena disappears.",
+      "storylineId": "st_heist", "alsoStorylineIds": [], "characterIds": ["ch_elena"],
+      "locationId": "lo_warehouse", "offscreen": false,
+      "anchor": { "date": "1998-11-03", "time": null }, "durationMin": null,
+      "reveals": ["rv_fire"], "requires": []
+    },
+    {
+      "id": "sc_i1", "title": "A Body in the Harbor", "summary": "Det. Reyes catches a decade-old cold case.",
+      "storylineId": "st_investigation", "alsoStorylineIds": [], "characterIds": ["ch_reyes"],
+      "locationId": "lo_harbor", "offscreen": false,
+      "anchor": { "date": "2008-06-12", "time": null }, "durationMin": null,
+      "reveals": [], "requires": []
+    },
+    {
+      "id": "sc_i2", "title": "The Rusted Key", "summary": "A physical clue ties back to the warehouse.",
+      "storylineId": "st_investigation", "alsoStorylineIds": [], "characterIds": ["ch_reyes"],
+      "locationId": "lo_harbor", "offscreen": false,
+      "anchor": { "date": "2008-06-13", "time": null }, "durationMin": null,
+      "reveals": [], "requires": []
+    },
+    {
+      "id": "sc_s1", "title": "Councilman's Offer", "summary": "Aldana offers Reyes a quiet way out.",
+      "storylineId": "st_politics", "alsoStorylineIds": [], "characterIds": ["ch_aldana"],
+      "locationId": "lo_cityhall", "offscreen": false,
+      "anchor": { "date": "2008-06-13", "time": null }, "durationMin": null,
+      "reveals": [], "requires": []
+    },
+    {
+      "id": "sc_s2", "title": "Dinner at the Overlook", "summary": "Aldana lets slip a detail only the fire explains.",
+      "storylineId": "st_politics", "alsoStorylineIds": [], "characterIds": ["ch_reyes", "ch_aldana"],
+      "locationId": "lo_cityhall", "offscreen": false,
+      "anchor": { "date": "2008-06-14", "time": null }, "durationMin": null,
+      "reveals": [], "requires": ["rv_fire"]
+    },
+    {
+      "id": "sc_i3", "title": "Marcus Talks", "summary": "Marcus finally admits what the job really was.",
+      "storylineId": "st_investigation", "alsoStorylineIds": [], "characterIds": ["ch_reyes", "ch_marcus"],
+      "locationId": "lo_harbor", "offscreen": false,
+      "anchor": { "date": "2008-06-15", "time": null }, "durationMin": null,
+      "reveals": [], "requires": ["rv_heist"]
+    },
+    {
+      "id": "sc_i4", "title": "Elena, Alive", "summary": "Elena never died in the fire at all.",
+      "storylineId": "st_investigation", "alsoStorylineIds": [], "characterIds": ["ch_reyes", "ch_elena"],
+      "locationId": "lo_docks", "offscreen": false,
+      "anchor": { "date": "2008-06-16", "time": null }, "durationMin": null,
+      "reveals": ["rv_elena_alive"], "requires": []
+    },
+    {
+      "id": "sc_s3", "title": "The Vote", "summary": "The harbor redevelopment vote — and Aldana's real motive.",
+      "storylineId": "st_politics", "alsoStorylineIds": ["st_investigation"], "characterIds": ["ch_reyes", "ch_aldana"],
+      "locationId": "lo_cityhall", "offscreen": false,
+      "anchor": { "date": "2008-06-17", "time": "19:00" }, "durationMin": 90,
+      "reveals": [], "requires": []
+    },
+    {
+      "id": "sc_i5", "title": "Confrontation at the Docks", "summary": "Reyes finds Elena at the docks as the vote is happening.",
+      "storylineId": "st_investigation", "alsoStorylineIds": [], "characterIds": ["ch_reyes", "ch_elena"],
+      "locationId": "lo_docks", "offscreen": false,
+      "anchor": { "date": "2008-06-17", "time": "19:30" }, "durationMin": 90,
+      "reveals": [], "requires": ["rv_elena_alive"]
+    },
+    {
+      "id": "sc_i6", "title": "The Tide Goes Out", "summary": "The case closes; the harbor keeps its secrets.",
+      "storylineId": "st_investigation", "alsoStorylineIds": [], "characterIds": ["ch_reyes"],
+      "locationId": "lo_harbor", "offscreen": false,
+      "anchor": { "date": "2008-06-18", "time": null }, "durationMin": null,
+      "reveals": [], "requires": []
+    }
+  ],
+  "chronOrder": ["sc_h1", "sc_h2", "sc_h3", "sc_i1", "sc_i2", "sc_s1", "sc_s2", "sc_i3", "sc_i4", "sc_s3", "sc_i5", "sc_i6"],
+  "msOrder": ["sc_i1", "sc_h1", "sc_i2", "sc_s1", "sc_i3", "sc_s2", "sc_h2", "sc_i4", "sc_h3", "sc_s3", "sc_i5", "sc_i6"],
+  "markers": [
+    { "id": "mk_1998", "label": "1998 — TEN YEARS EARLIER", "beforeSceneId": "sc_h1" },
+    { "id": "mk_2008", "label": "2008 — PRESENT DAY", "beforeSceneId": "sc_i1" }
+  ],
+  "dividers": [
+    { "id": "dv_part2", "label": "PART II", "beforeSceneId": "sc_h2" }
+  ],
+  "dismissed": [],
+  "viewPrefs": { "mode": "side", "axis": "ordinal", "threadCharId": null, "chronHeightPx": 260, "panelTab": "inspector", "panelOpen": true, "pxPerScene": 110 }
+}

@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:;">
+<title>ThruLine — Editor</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div id="editorApp">
+  <div id="topbar">
+    <div id="logo"><b>Thru<span>Line</span></b></div>
+    <div id="proj">Project: <b id="projName"></b></div>
+    <div class="spacer"></div>
+
+    <div class="seg" id="viewSwitcher" title="View">
+      <button data-mode="chron">Chronology</button>
+      <button data-mode="side" class="on">Side-by-Side</button>
+      <button data-mode="ms">Manuscript</button>
+      <button data-mode="braid">Braid</button>
+    </div>
+    <div class="seg" id="axisSwitcher" title="Axis mode">
+      <button data-axis="ordinal" class="on">Ordinal</button>
+      <button data-axis="true">True scale</button>
+    </div>
+    <select class="chip" id="threadPicker" title="Character thread">
+      <option value="">Thread: None</option>
+    </select>
+    <button class="chip" id="themeToggle" title="Toggle theme">☾</button>
+    <button class="chip" id="confBtn" disabled>Conflicts <span class="n" id="confCount">0</span></button>
+
+    <div style="position:relative;">
+      <button class="iconbtn" id="overflowBtn" title="More">⋯</button>
+      <div class="modalOverlay" id="overflowMenu" hidden style="background:transparent; align-items:flex-start; justify-content:flex-end;">
+        <div class="modal" style="width:200px; margin-top:52px; margin-right:16px;">
+          <button class="btn" id="menuExport">Export JSON</button>
+          <button class="btn" id="menuImport">Import JSON</button>
+          <a class="btn" id="menuBack" href="index.html" style="text-align:center; text-decoration:none;">Back to Projects</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="main">
+    <div id="stage">
+      <svg id="wires"></svg>
+
+      <div id="chronSection" class="viewMode active" data-view="chron side">
+        <div class="sectionLabel">CHRONOLOGY — when it happens</div>
+        <div class="placeholderPanel">Chronology view content is built in a later milestone.</div>
+      </div>
+
+      <div id="divider" class="viewMode active" data-view="side"></div>
+
+      <div id="wiresZone" class="viewMode active" data-view="side"></div>
+
+      <div id="manuscriptSection" class="viewMode active" data-view="ms side">
+        <div class="sectionLabel">MANUSCRIPT — what the reader gets, in order</div>
+        <div class="placeholderPanel">Manuscript view content is built in a later milestone.</div>
+      </div>
+
+      <div id="braidSection" class="viewMode" data-view="braid">
+        <div class="sectionLabel">BRAID</div>
+        <div class="placeholderPanel">Braid view content is built in a later milestone.</div>
+      </div>
+    </div>
+
+    <aside id="rightPanel">
+      <div class="panelTabs">
+        <button data-tab="inspector" class="on">Inspector</button>
+        <button data-tab="conflicts">Conflicts</button>
+      </div>
+      <div class="panelBody" id="panelBody">
+        <div class="panelEmpty">Select a scene to edit it here. Project-level lists and the
+          conflict engine arrive in later milestones.</div>
+      </div>
+    </aside>
+  </div>
+
+  <div id="footerHint">
+    <span>Hover a scene to trace it across both views</span><span>·</span>
+    <span>Click a conflict to see the scenes involved</span>
+  </div>
+</div>
+
+<div id="toasts"></div>
+
+<script src="js/state.js"></script>
+<script src="js/editor.js"></script>
+<script src="js/editor-init.js"></script>
+</body>
+</html>

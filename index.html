@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:;">
+<title>ThruLine — Projects</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div id="app">
+  <div id="topbar">
+    <div id="logo"><b>Thru<span>Line</span></b></div>
+    <div class="spacer"></div>
+    <button class="btn" id="btnNewProject">+ New project</button>
+    <button class="btn" id="btnImportProject">Import project…</button>
+  </div>
+
+  <main id="projMain">
+    <div id="projGrid" class="projGrid"></div>
+    <div id="projEmpty" class="emptyState" hidden>No projects yet. Create one, or import a ThruLine JSON file.</div>
+  </main>
+
+  <input type="file" id="importFileInput" accept="application/json,.json" hidden>
+</div>
+
+<!-- New project modal -->
+<div class="modalOverlay" id="modalNewProject" hidden>
+  <div class="modal">
+    <h3>New project</h3>
+    <div>
+      <label for="newProjectName">Project name</label>
+      <input type="text" id="newProjectName" maxlength="120">
+    </div>
+    <div class="row">
+      <button class="btn" id="newProjectCancel">Cancel</button>
+      <button class="btn primary" id="newProjectCreate">Create</button>
+    </div>
+  </div>
+</div>
+
+<!-- Rename modal -->
+<div class="modalOverlay" id="modalRename" hidden>
+  <div class="modal">
+    <h3>Rename project</h3>
+    <div>
+      <label for="renameInput">Project name</label>
+      <input type="text" id="renameInput" maxlength="120">
+    </div>
+    <div class="row">
+      <button class="btn" id="renameCancel">Cancel</button>
+      <button class="btn primary" id="renameConfirm">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Delete confirm modal (typed confirm) -->
+<div class="modalOverlay" id="modalDelete" hidden>
+  <div class="modal">
+    <h3>Delete project</h3>
+    <p>This permanently deletes <b id="deleteProjectName"></b> from this browser. Type the project
+      name to confirm.</p>
+    <div>
+      <label for="deleteInput">Project name</label>
+      <input type="text" id="deleteInput">
+    </div>
+    <div class="row">
+      <button class="btn" id="deleteCancel">Cancel</button>
+      <button class="btn danger" id="deleteConfirm" disabled>Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- Import conflict modal (same uid) -->
+<div class="modalOverlay" id="modalImportConflict" hidden>
+  <div class="modal">
+    <h3>Project already exists</h3>
+    <p id="importConflictMsg"></p>
+    <div class="row">
+      <button class="btn" id="importCancel">Cancel</button>
+      <button class="btn" id="importKeepBoth">Keep both</button>
+      <button class="btn primary" id="importUpdate">Update local copy</button>
+    </div>
+  </div>
+</div>
+
+<!-- Import error modal -->
+<div class="modalOverlay" id="modalImportError" hidden>
+  <div class="modal">
+    <h3>Import failed</h3>
+    <p id="importErrorMsg"></p>
+    <div class="row">
+      <button class="btn primary" id="importErrorOk">OK</button>
+    </div>
+  </div>
+</div>
+
+<div id="toasts"></div>
+
+<script src="js/state.js"></script>
+<script src="js/projects.js"></script>
+<script src="js/projects-init.js"></script>
+</body>
+</html>
