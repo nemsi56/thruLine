@@ -19,15 +19,25 @@ function refreshAll() {
   if (nameEl) nameEl.textContent = P.name;
   applyViewMode(P.viewPrefs.mode);
   refreshThreadPicker();
+  // §12: refresh the conflicts cache synchronously so this render's warn-dots/badge are
+  // never stale — scheduleConflictsRecompute() (state.js's saveProject) still does its
+  // own debounced follow-up pass (covers callers that mutate cache-affecting state
+  // without a fresh refreshAll, and satisfies §12's literal "debounced 150ms" re-run),
+  // but the computation itself is cheap/pure so recomputing it here too costs nothing
+  // and avoids a 150ms flash of stale warn-dots after every single commit.
+  if (typeof conflictsCacheRefreshNow === 'function') conflictsCacheRefreshNow();
+  if (typeof renderConflictsBadge === 'function') renderConflictsBadge();
   if (typeof renderChron === 'function') renderChron();
   if (typeof renderManuscript === 'function') renderManuscript();
   if (typeof renderBraid === 'function') renderBraid();
-  // Re-render the inspector for whatever is currently selected (§5.2: saveProject()'s
-  // refreshAll() re-renders "both views, wires, conflicts, inspector") — every field
-  // edit funnels through commit()->saveProject()->refreshAll(), so without this the
-  // panel would go stale after its own edits (e.g. a new chip/constraint added but
-  // never redrawn).
-  if (typeof renderInspectorSelection === 'function') {
+  // Re-render whichever tab owns #panelBody right now (§12.7: Conflicts is a second
+  // panel tab alongside Inspector — only one renders its content at a time). Every
+  // field edit / conflict dismissal funnels through commit()->saveProject()->
+  // refreshAll(), so without this the panel would go stale after its own edits (e.g. a
+  // new chip/constraint added, or a conflict dismissed, but never redrawn).
+  if (P.viewPrefs.panelTab === 'conflicts' && typeof renderConflictsPanel === 'function') {
+    renderConflictsPanel();
+  } else if (typeof renderInspectorSelection === 'function') {
     renderInspectorSelection(typeof _chronSelectedSceneId !== 'undefined' ? _chronSelectedSceneId : null);
   }
   // wires read card positions via getBoundingClientRect, so it must render last.

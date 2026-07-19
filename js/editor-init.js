@@ -24,6 +24,17 @@
   if (typeof initManuscriptRowListeners === 'function') initManuscriptRowListeners();
   if (typeof initWireScrollListeners === 'function') initWireScrollListeners();
   if (typeof initBraidScrollListeners === 'function') initBraidScrollListeners();
+  // §12: prime the conflicts cache before the very first render — this isn't a commit,
+  // so the debounced scheduleConflictsRecompute() path (state.js's saveProject) doesn't
+  // apply here and the panel/badge/warn-dots would otherwise show stale (empty) data
+  // for the first 150ms.
+  if (typeof conflictsCacheRefreshNow === 'function') conflictsCacheRefreshNow();
+  // Sync the panel tab buttons' visual state to the persisted viewPrefs.panelTab —
+  // editor.html hardcodes Inspector as the "on" tab, which is only correct when a
+  // project was last saved with panelTab:"inspector".
+  document.querySelectorAll('.panelTabs button').forEach(function (b) {
+    b.classList.toggle('on', b.dataset.tab === (P.viewPrefs.panelTab || 'inspector'));
+  });
   refreshAll();
 
   // zoom slider (§7.6) — pxPerScene, 70-200, persisted in viewPrefs; re-render both
@@ -105,6 +116,13 @@
     saveProject();
   });
 
+  // Conflicts button (top bar, §3.1/§12.7): switch the panel to the Conflicts tab.
+  document.getElementById('confBtn').addEventListener('click', function () {
+    document.querySelectorAll('.panelTabs button').forEach(function (b) { b.classList.toggle('on', b.dataset.tab === 'conflicts'); });
+    P.viewPrefs.panelTab = 'conflicts';
+    saveProject();
+  });
+
   // overflow menu
   document.getElementById('overflowBtn').addEventListener('click', function () {
     document.getElementById('overflowMenu').hidden = false;
@@ -160,6 +178,12 @@
         if (typeof closeDividerPopover === 'function') closeDividerPopover();
         var dCtxMenu = document.getElementById('dividerContextMenu');
         if (dCtxMenu) dCtxMenu.remove();
+        return;
+      }
+      // §12.7: Escape clears flag mode (same priority tier as closing a popover/modal).
+      if (typeof isFlagModeActive === 'function' && isFlagModeActive()) {
+        clearFlagMode();
+        if (typeof renderConflictsPanel === 'function' && P.viewPrefs.panelTab === 'conflicts') renderConflictsPanel();
         return;
       }
       if (typeof selectScene === 'function') selectScene(null);

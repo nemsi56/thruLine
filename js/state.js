@@ -278,6 +278,8 @@ function saveProject() {
   safeSetItem(LS_PROJ_KEY(P.projectUid), JSON.stringify(P));
   updateIndexEntry(P);
   if (typeof refreshAll === 'function') refreshAll();
+  // §12: conflict engine re-run, debounced 150ms, after every commit.
+  if (typeof scheduleConflictsRecompute === 'function') scheduleConflictsRecompute();
 }
 
 function pruneDismissed(P) {

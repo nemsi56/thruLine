@@ -72,8 +72,17 @@ function redrawWires() {
     var opacity = 0.5, width = 1.6;
     if (hovering) opacity = isHi ? 1 : 0.08;
     if (isHi) width = 2.6;
-    // Conflict flag-mode dimming (§9's --red / opacity .06 branch) is a later
-    // milestone — conflicts.js doesn't exist yet, so only the hover branch is built.
+    // Conflict flag-mode dimming (§9, §12.7): flagged scenes' wires turn --red at full
+    // opacity/width, everything else drops to .06. Takes priority over the hover branch
+    // above (flag mode is a click-driven mode; hover state while flagging is a rare
+    // edge case not spelled out in the spec).
+    if (typeof isFlagModeActive === 'function' && isFlagModeActive()) {
+      var flaggedIds = (typeof getFlaggedSceneIds === 'function' && getFlaggedSceneIds()) || [];
+      var isFlagged = flaggedIds.indexOf(s.id) !== -1;
+      color = isFlagged ? 'var(--red)' : color;
+      opacity = isFlagged ? 1 : 0.06;
+      width = isFlagged ? 2.6 : 1.6;
+    }
 
     var path = document.createElementNS(SVG_NS, 'path');
     path.setAttribute('d',

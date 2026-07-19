@@ -356,6 +356,12 @@ function renderChron() {
   var storylineById = {};
   P.storylines.forEach(function (st) { storylineById[st.id] = st; });
 
+  // renderChron() can be called to rebuild cards from scratch at any time (any commit
+  // triggers refreshAll()) -- if that happens while flag mode is active, the .flag
+  // class must be re-applied here, not assumed to survive from setFlagMode()'s
+  // one-time DOM pass.
+  var flaggedIds = (typeof getFlaggedSceneIds === 'function') ? (getFlaggedSceneIds() || []) : [];
+
   // cards
   P.scenes.forEach(function (s) {
     var x = xMap.get(s.id);
@@ -372,6 +378,8 @@ function renderChron() {
     card.style.setProperty('--c', slColor(storylineById[s.storylineId].paletteIndex));
     if (s.offscreen) card.classList.add('offscreen');
     if (s.id === _chronSelectedSceneId) card.classList.add('sel');
+    if (flaggedIds.indexOf(s.id) !== -1) card.classList.add('flag');
+    if (typeof sceneHasWarning === 'function' && sceneHasWarning(s.id)) card.classList.add('warn');
 
     var warnDot = document.createElement('div');
     warnDot.className = 'warnDot';

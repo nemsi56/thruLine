@@ -186,6 +186,12 @@ function renderBraid() {
 
   var hoveredEl = document.querySelector('.scene.hi, .msCard.hi, .braidNode.hi');
   var hoveredId = hoveredEl ? hoveredEl.getAttribute('data-scene-id') : null;
+  // renderBraid() can (re)build nodes from scratch at any time -- e.g. switching to
+  // the Braid view AFTER flag mode was already activated from the Conflicts panel
+  // while a different view was showing -- so flag state must be re-applied here
+  // rather than assumed to already be on the DOM (setFlagMode() only touches
+  // elements that exist in the DOM at the moment it runs).
+  var flaggedIds = (typeof getFlaggedSceneIds === 'function') ? (getFlaggedSceneIds() || []) : [];
 
   msOrder.forEach(function (id, i) {
     var s = sceneById[id];
@@ -199,6 +205,7 @@ function renderBraid() {
     var g = _braidEl('g', { class: 'braidNode', 'data-scene-id': id });
     if (id === _chronSelectedSceneId) g.classList.add('sel');
     if (hoveredId && id === hoveredId) g.classList.add('hi');
+    if (flaggedIds.indexOf(id) !== -1) g.classList.add('flag');
 
     var circle = _braidEl('circle', { cx: x, cy: y, r: 11, 'stroke-width': 3 });
     circle.style.fill = 'var(--panel)';

@@ -232,6 +232,14 @@ function buildMsCard(s, index, storylineById, baselineYear) {
   var st = storylineById[s.storylineId];
   card.style.setProperty('--c', st ? slColor(st.paletteIndex) : 'var(--faint)');
   if (s.id === _chronSelectedSceneId) card.classList.add('sel');
+  if (typeof sceneHasWarning === 'function' && sceneHasWarning(s.id)) card.classList.add('warn');
+  // buildMsCard() runs on every renderManuscript() rebuild (any commit) -- if flag mode
+  // is active at that moment, .flag must be re-applied here (setFlagMode() only touches
+  // DOM elements that exist at the moment it runs, not ones built later).
+  if (typeof getFlaggedSceneIds === 'function') {
+    var flaggedIds = getFlaggedSceneIds() || [];
+    if (flaggedIds.indexOf(s.id) !== -1) card.classList.add('flag');
+  }
 
   var warnDot = document.createElement('div');
   warnDot.className = 'warnDot';
