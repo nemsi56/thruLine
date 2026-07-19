@@ -20,6 +20,9 @@ function refreshAll() {
   applyViewMode(P.viewPrefs.mode);
   refreshThreadPicker();
   if (typeof renderChron === 'function') renderChron();
+  if (typeof renderManuscript === 'function') renderManuscript();
+  // wires read card positions via getBoundingClientRect, so it must render last.
+  if (typeof redrawWires === 'function') redrawWires();
 }
 
 function refreshThreadPicker() {

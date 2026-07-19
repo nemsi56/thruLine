@@ -30,6 +30,32 @@ function slColor(paletteIndex) {
   return pal[((paletteIndex % pal.length) + pal.length) % pal.length];
 }
 
+/* ---------------- convergence dots (§7.1, reused by chron.js + manuscript.js) ----------------
+   For each id in scene.alsoStorylineIds, a small dot in that storyline's color
+   (max 4 dots, then "+n"). Returns null when the scene has no secondary storylines. */
+function renderConvDots(scene, storylineById) {
+  if (!scene.alsoStorylineIds || !scene.alsoStorylineIds.length) return null;
+  var dots = document.createElement('div');
+  dots.className = 'convDots';
+  var shown = scene.alsoStorylineIds.slice(0, 4);
+  shown.forEach(function (stId) {
+    var st = storylineById[stId];
+    if (!st) return;
+    var d = document.createElement('span');
+    d.className = 'convDot';
+    d.style.background = slColor(st.paletteIndex);
+    d.title = st.name;
+    dots.appendChild(d);
+  });
+  if (scene.alsoStorylineIds.length > 4) {
+    var more = document.createElement('span');
+    more.className = 'convMore';
+    more.textContent = '+' + (scene.alsoStorylineIds.length - 4);
+    dots.appendChild(more);
+  }
+  return dots;
+}
+
 /* ---------------- project object shape ---------------- */
 
 function makeEmptyProject(name) {

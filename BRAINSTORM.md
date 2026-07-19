@@ -263,3 +263,31 @@ braid"). Outcomes:
     hosting can eventually let both apps share localStorage ("jump between apps").
 11. **Conflicts stay non-AI:** user-declared reveals/requires + set arithmetic over
     reading order; all metadata optional, checks activate only when data exists.
+
+## 13. Build progress and a known layout gap (July 18, 2026)
+
+M1–M4 are built and pushed (`github.com/nemsi56/thruLine`, branch `main`): state model,
+projects page, editor shell, chronology view (lanes/cards/markers/selection/hover/
+thread overlay), and manuscript view + cross-view wires + cross-view hover/selection
+linking. Each milestone was built by a Sonnet subagent from the spec, then verified live
+in-browser by Claude directly (the subagent explicitly avoids the shared browser
+session, so this split — cheap delegated build, then a real verification pass — is the
+working pattern for the rest of the milestones too).
+
+**Known gap, deliberately left unfixed for now:** ordinal-mode chronology/manuscript
+cards can visually overlap at ordinary window widths, confirmed via screenshot — see
+`THRULINE_V1_SPEC.md` §6.1's inline note for the root cause (fixed card width vs.
+global-index-based spacing, no collision pass in ordinal mode, no scroll container
+yet). Decision: wait for M7 (scroll + zoom, §7.6) rather than patch ordinal mode now —
+that milestone is the real fix and a separate interim collision pass would be
+throwaway work.
+
+**Bugs found and fixed during verification so far**, for reference: M3's character-
+thread `<svg>` didn't fill its container (CSS `inset:0` doesn't stretch a "replaced
+element" like `<svg>` — needs explicit width/height), fixed and confirmed. M4's wires
+`<svg>` correctly avoided the same mistake (explicit width/height attributes, per
+spec's own §9 instruction). Also confirmed environment-specific: this session's
+browser-automation tool doesn't dispatch real `resize` events or trigger
+`ResizeObserver` at all (verified with a throwaway observer that never fired) — code
+that depends on either can't be live-verified here and should get a real-browser
+spot-check eventually, but isn't assumed broken on that basis alone.

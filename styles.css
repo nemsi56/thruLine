@@ -246,3 +246,40 @@ body.flagging .scene:not(.flag), body.flagging .msCard:not(.flag) { opacity: .25
 .markerPopover .row { display: flex; justify-content: flex-end; }
 
 .inspectorSceneTitle { font-size: 14px; font-weight: 600; margin-bottom: 8px; }
+
+/* ==================================================================
+   Manuscript view (M4) — card strip + dividers
+   ================================================================== */
+
+#msRow {
+  display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-start;
+  margin-left: 140px; /* aligns with the chronology track (128px lane-label column + 12px gap) */
+}
+
+.msCard {
+  position: relative; flex: 1 1 110px; min-width: 110px; max-width: 220px;
+  background: var(--panel); border: 1px solid var(--line); border-radius: 8px;
+  padding: 6px 8px 6px; cursor: pointer; border-top: 3px solid var(--c);
+  transition: opacity .15s, box-shadow .15s, border-color .15s;
+}
+.msCard .ch { font-size: 9px; letter-spacing: 1px; color: var(--faint); font-weight: 700; }
+.msCard .t {
+  font-size: 10.5px; font-weight: 600; line-height: 1.2; margin-top: 2px; hyphens: auto;
+  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+}
+.msCard .eraTag {
+  position: absolute; top: 5px; right: 6px; font-size: 8.5px; color: var(--faint);
+  border: 1px solid var(--line); border-radius: 4px; padding: 0 3px; letter-spacing: .5px;
+}
+
+/* dividers (§8.2) — same {label, beforeSceneId} mechanism + interaction pattern as
+   chronology markers (§7.4): thin vertical bar with a small label above the row. */
+.msDivider {
+  position: relative; align-self: stretch; flex: 0 0 auto; width: 0;
+  border-left: 1px dashed var(--faint); margin: 22px 4px 0;
+}
+.msDividerLabel {
+  position: absolute; top: -20px; left: 4px; font-size: 9px; letter-spacing: 1px;
+  color: var(--faint); white-space: nowrap; cursor: pointer; font-weight: 700;
+}
+.msDividerLabel:hover { color: var(--tx); }

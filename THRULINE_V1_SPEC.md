@@ -283,6 +283,20 @@ the track width). Layout code adds its own left/right padding.
 
 Scenes evenly spaced in `chronOrder` order: `x = (i + 0.5) / N * 100`.
 
+> **Known gap (found in M4 verification, July 2026):** this formula spaces scenes by
+> their position in the GLOBAL `chronOrder`, not per-lane, so two same-lane scenes that
+> are adjacent in the overall order can land closer together (in pixels) than the fixed
+> card width once the track is narrower than roughly `cardWidth × N`. Confirmed
+> reproducing as visibly overlapping/unreadable cards in both the chronology and
+> manuscript strips at ordinary window widths. §6.2's collision pass is currently
+> scoped to true-scale mode only — it does not run in ordinal mode, and no scroll
+> container exists yet either (that's §7.6, M7). Decision: leave as-is for now; §7.6's
+> scroll + zoom work is the intended real fix (cards get room instead of being
+> squeezed), so do not build a separate ordinal-mode collision pass unless M7 is
+> deliberately reprioritized earlier. Until M7 lands, expect overlapping cards on
+> screenshots/demos of any project denser than a handful of scenes per lane — this is
+> known, not a regression to chase in M5/M6.
+
 ### 6.2 True-scale mode
 
 1. Parse each anchored scene to a timestamp: date at `00:00` if no time. Collect

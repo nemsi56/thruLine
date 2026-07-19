@@ -148,31 +148,12 @@ function renderChron() {
     meta.appendChild(chSpan);
     card.appendChild(meta);
 
-    // convergence dots
-    if (s.alsoStorylineIds && s.alsoStorylineIds.length) {
-      var dots = document.createElement('div');
-      dots.className = 'convDots';
-      var shown = s.alsoStorylineIds.slice(0, 4);
-      shown.forEach(function (stId) {
-        var st = storylineById[stId];
-        if (!st) return;
-        var d = document.createElement('span');
-        d.className = 'convDot';
-        d.style.background = slColor(st.paletteIndex);
-        d.title = st.name;
-        dots.appendChild(d);
-      });
-      if (s.alsoStorylineIds.length > 4) {
-        var more = document.createElement('span');
-        more.className = 'convMore';
-        more.textContent = '+' + (s.alsoStorylineIds.length - 4);
-        dots.appendChild(more);
-      }
-      card.appendChild(dots);
-    }
+    // convergence dots (shared helper, also used by manuscript.js)
+    var convDots = renderConvDots(s, storylineById);
+    if (convDots) card.appendChild(convDots);
 
-    card.addEventListener('mouseenter', function () { chronHoverScene(s.id, true); });
-    card.addEventListener('mouseleave', function () { chronHoverScene(s.id, false); });
+    card.addEventListener('mouseenter', function () { highlightScene(s.id, true); });
+    card.addEventListener('mouseleave', function () { highlightScene(s.id, false); });
     card.addEventListener('click', function (e) { e.stopPropagation(); selectScene(s.id); });
 
     track.appendChild(card);
@@ -182,16 +163,10 @@ function renderChron() {
   renderChronThread(threadSvg);
 }
 
-/* ---------------- hover (§10.1) ---------------- */
-
-function chronHoverScene(sceneId, on) {
-  if (_dragActive) return;
-  document.body.classList.toggle('hovering', on);
-  document.querySelectorAll('[data-scene-id="' + sceneId + '"]').forEach(function (el) {
-    el.classList.toggle('hi', on);
-  });
-  if (typeof redrawWires === 'function') redrawWires();
-}
+/* ---------------- hover (§10.1) ----------------
+   highlightScene()/clearHighlight() live in wires.js (the shared cross-view hover+wire
+   mechanism per §10.1) since redrawing the wire on hover is the whole point of moving
+   it out of this file — chron.js and manuscript.js both call highlightScene() directly. */
 
 /* ---------------- selection (§10.2) ----------------
    Full field editing is M6; for now selecting just shows the title in the Inspector

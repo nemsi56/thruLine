@@ -21,7 +21,21 @@
 
   initDividerDrag();
   if (typeof initChronTrackListeners === 'function') initChronTrackListeners();
+  if (typeof initManuscriptRowListeners === 'function') initManuscriptRowListeners();
   refreshAll();
+
+  // wires read card positions via getBoundingClientRect; a ResizeObserver on the stage
+  // catches divider drags / panel collapse that a plain window resize would miss.
+  if (typeof redrawWires === 'function' && typeof ResizeObserver !== 'undefined') {
+    var stageEl = document.getElementById('stage');
+    if (stageEl) {
+      var _wiresRO = new ResizeObserver(function () {
+        clearTimeout(_wiresRO._t);
+        _wiresRO._t = setTimeout(redrawWires, 150);
+      });
+      _wiresRO.observe(stageEl);
+    }
+  }
 
   // view switcher
   document.getElementById('viewSwitcher').addEventListener('click', function (e) {
@@ -94,6 +108,12 @@
         if (typeof closeMarkerPopover === 'function') closeMarkerPopover();
         var ctxMenu = document.getElementById('markerContextMenu');
         if (ctxMenu) ctxMenu.remove();
+        return;
+      }
+      if (document.getElementById('dividerPopover') || document.getElementById('dividerContextMenu')) {
+        if (typeof closeDividerPopover === 'function') closeDividerPopover();
+        var dCtxMenu = document.getElementById('dividerContextMenu');
+        if (dCtxMenu) dCtxMenu.remove();
         return;
       }
       if (typeof selectScene === 'function') selectScene(null);
