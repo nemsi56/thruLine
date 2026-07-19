@@ -1,0 +1,346 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Design C — The Braid</title>
+<style>
+  html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: #14161c;
+    color: #e8eaf2;
+    font-family: -apple-system, "Segoe UI", sans-serif;
+  }
+  body {
+    display: flex;
+    flex-direction: column;
+  }
+  header {
+    flex: 0 0 52px;
+    height: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+    border-bottom: 1px solid #2a2f3d;
+    box-sizing: border-box;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .brand .logo {
+    font-weight: bold;
+    font-size: 15px;
+    color: #e8eaf2;
+  }
+  .brand .logo .accent {
+    color: #3fd6b7;
+  }
+  .brand .pill {
+    font-size: 10px;
+    color: #8b91a5;
+    border: 1px solid #2a2f3d;
+    border-radius: 999px;
+    padding: 3px 9px;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+  }
+  .legend {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+  }
+  .legend .item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    color: #b7bbc9;
+    white-space: nowrap;
+  }
+  .legend .dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    display: inline-block;
+    flex: 0 0 auto;
+  }
+  .legend .dash-sample {
+    display: inline-block;
+    flex: 0 0 auto;
+  }
+  .chart-wrap {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+  }
+  #chart {
+    display: block;
+    margin: auto;
+    width: 100%;
+    height: 100%;
+  }
+  footer {
+    flex: 0 0 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-top: 1px solid #2a2f3d;
+    box-sizing: border-box;
+  }
+  footer .hint {
+    font-style: italic;
+    font-size: 11px;
+    color: #5a6072;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <span class="logo">Through<span class="accent">line</span></span>
+    <span class="pill">DESIGN C &middot; THE BRAID</span>
+  </div>
+  <div class="legend">
+    <span class="item"><span class="dot" style="background:#5aa9e6;"></span>Investigation</span>
+    <span class="item"><span class="dot" style="background:#e0a458;"></span>The Heist</span>
+    <span class="item"><span class="dot" style="background:#a78bfa;"></span>Harbor Politics</span>
+    <span class="item">
+      <svg class="dash-sample" width="22" height="10" viewBox="0 0 22 10">
+        <line x1="0" y1="5" x2="22" y2="5" stroke="#e0a458" stroke-width="2.5" stroke-dasharray="7 5"/>
+      </svg>
+      flashback jump
+    </span>
+  </div>
+</header>
+
+<div class="chart-wrap">
+  <svg id="chart" viewBox="0 0 1240 700" preserveAspectRatio="xMidYMid meet"></svg>
+</div>
+
+<footer>
+  <span class="hint">read left to right — every upward jump is a flashback; the deeper the jump, the further back in time</span>
+</footer>
+
+<script>
+(function () {
+  var SVGNS = 'http://www.w3.org/2000/svg';
+
+  function el(tag, attrs, text) {
+    var e = document.createElementNS(SVGNS, tag);
+    if (attrs) {
+      for (var k in attrs) {
+        if (attrs[k] !== null && attrs[k] !== undefined) {
+          e.setAttribute(k, attrs[k]);
+        }
+      }
+    }
+    if (text !== undefined && text !== null) {
+      e.textContent = text;
+    }
+    return e;
+  }
+
+  var scenes = [
+    { id: 'H1', title: 'The Vault Job',              rank: 1,  ch: 2,  story: 'heist', warn: false },
+    { id: 'H2', title: 'The Betrayal',                rank: 2,  ch: 7,  story: 'heist', warn: false },
+    { id: 'H3', title: 'The Fire',                    rank: 3,  ch: 9,  story: 'heist', warn: true  },
+    { id: 'I1', title: 'A Body in the Harbor',        rank: 4,  ch: 1,  story: 'inv',   warn: false },
+    { id: 'I2', title: 'The Rusted Key',              rank: 5,  ch: 3,  story: 'inv',   warn: false },
+    { id: 'S1', title: 'Councilman\'s Offer',         rank: 6,  ch: 4,  story: 'sub',   warn: false },
+    { id: 'S2', title: 'Dinner at the Overlook',      rank: 7,  ch: 6,  story: 'sub',   warn: true  },
+    { id: 'I3', title: 'Marcus Talks',                rank: 8,  ch: 5,  story: 'inv',   warn: false },
+    { id: 'I4', title: '"Elena, Alive"',              rank: 9,  ch: 8,  story: 'inv',   warn: false },
+    { id: 'S3', title: 'The Vote',                    rank: 10, ch: 10, story: 'sub',   warn: true  },
+    { id: 'I5', title: 'Confrontation at the Docks',  rank: 11, ch: 11, story: 'inv',   warn: true  },
+    { id: 'I6', title: 'The Tide Goes Out',           rank: 12, ch: 12, story: 'inv',   warn: false }
+  ];
+
+  var storylineColor = { inv: '#5aa9e6', heist: '#e0a458', sub: '#a78bfa' };
+
+  var timeLabels = {
+    1: 'Oct 1998', 2: 'Oct 1998', 3: 'Nov 1998',
+    4: 'Day 1', 5: 'Day 2', 6: 'Day 2', 7: 'Day 3', 8: 'Day 4',
+    9: 'Day 5', 10: 'Day 6', 11: 'Day 6', 12: 'Day 7'
+  };
+
+  function xOf(ch) { return 110 + (ch - 1) * 93; }
+  function yOf(rank) { return 70 + (rank - 1) * 46; }
+
+  var svg = document.getElementById('chart');
+
+  // ---- ERA BANDS ----
+  var band1Y1 = yOf(1) - 23;
+  var band1Y2 = yOf(3) + 23;
+  svg.appendChild(el('rect', {
+    x: 90, y: band1Y1, width: 1180 - 90, height: band1Y2 - band1Y1,
+    rx: 8, ry: 8, fill: '#e0a458', opacity: '0.07'
+  }));
+  svg.appendChild(el('text', {
+    x: 100, y: band1Y1 + 16, 'font-size': 9, 'font-weight': 'bold',
+    'letter-spacing': '1.2px', fill: '#e0a458', opacity: '0.7'
+  }, '1998 · TEN YEARS EARLIER'));
+
+  var band2Y1 = yOf(4) - 23;
+  var band2Y2 = yOf(12) + 23;
+  svg.appendChild(el('rect', {
+    x: 90, y: band2Y1, width: 1180 - 90, height: band2Y2 - band2Y1,
+    rx: 8, ry: 8, fill: '#5aa9e6', opacity: '0.05'
+  }));
+  svg.appendChild(el('text', {
+    x: 1170, y: band2Y1 + 16, 'font-size': 9, 'font-weight': 'bold',
+    'letter-spacing': '1.2px', fill: '#5aa9e6', opacity: '0.7',
+    'text-anchor': 'end'
+  }, '2008 · PRESENT DAY'));
+
+  // ---- GRIDLINES ----
+  for (var r = 1; r <= 12; r++) {
+    svg.appendChild(el('line', {
+      x1: 90, x2: 1180, y1: yOf(r), y2: yOf(r),
+      stroke: '#1d2230', 'stroke-width': 1
+    }));
+  }
+
+  // ---- AXIS LABELS ----
+  svg.appendChild(el('text', {
+    x: 110, y: 34, 'font-size': 10, 'font-weight': 'bold',
+    'letter-spacing': '1.5px', fill: '#5a6072'
+  }, 'READING ORDER →'));
+
+  for (var c = 1; c <= 12; c++) {
+    svg.appendChild(el('text', {
+      x: xOf(c), y: 52, 'font-size': 10, fill: '#8b91a5', 'text-anchor': 'middle'
+    }, 'CH ' + c));
+  }
+
+  svg.appendChild(el('text', {
+    x: 30, y: 360, 'font-size': 10, 'font-weight': 'bold',
+    'letter-spacing': '1.5px', fill: '#5a6072', 'text-anchor': 'middle',
+    transform: 'rotate(-90 30 360)'
+  }, 'STORY TIME ↓'));
+
+  // ---- READING PATH ----
+  var sorted = scenes.slice().sort(function (a, b) { return a.ch - b.ch; });
+  var pathEls = [];
+
+  for (var i = 0; i < sorted.length - 1; i++) {
+    var a = sorted[i], b = sorted[i + 1];
+    var ax = xOf(a.ch), ay = yOf(a.rank);
+    var bx = xOf(b.ch), by = yOf(b.rank);
+    var mx = (ax + bx) / 2;
+    var isFlashback = b.rank < a.rank;
+    var d = 'M ' + ax + ' ' + ay + ' C ' + mx + ' ' + ay + ', ' + mx + ' ' + by + ', ' + bx + ' ' + by;
+
+    var pathAttrs = {
+      d: d,
+      fill: 'none',
+      stroke: isFlashback ? '#e0a458' : '#8b91a5',
+      'stroke-width': isFlashback ? 2.5 : 2.5,
+      opacity: isFlashback ? 0.9 : 0.55,
+      'data-from': a.ch,
+      'data-to': b.ch,
+      'data-flash': isFlashback ? 'true' : 'false',
+      'stroke-linecap': 'round'
+    };
+    if (isFlashback) {
+      pathAttrs['stroke-dasharray'] = '7 5';
+    }
+    var p = el('path', pathAttrs);
+    svg.appendChild(p);
+    pathEls.push(p);
+  }
+
+  // ---- NODES + LABELS (path already drawn, so nodes sit on top) ----
+  scenes.forEach(function (s) {
+    var x = xOf(s.ch), y = yOf(s.rank);
+    var color = storylineColor[s.story];
+
+    var g = el('g', { 'data-ch': s.ch });
+
+    var circle = el('circle', {
+      cx: x, cy: y, r: 11, fill: '#191c25', stroke: color, 'stroke-width': 3,
+      'data-ch': s.ch, style: 'cursor:pointer;'
+    });
+    g.appendChild(circle);
+
+    var num = el('text', {
+      x: x, y: y, 'font-size': 10, 'font-weight': 'bold', fill: '#e8eaf2',
+      'text-anchor': 'middle', 'dominant-baseline': 'central', 'pointer-events': 'none'
+    }, String(s.ch));
+    g.appendChild(num);
+
+    if (s.warn) {
+      g.appendChild(el('circle', {
+        cx: x + 10, cy: y - 10, r: 4, fill: '#ef6a6a',
+        stroke: '#14161c', 'stroke-width': 2, 'pointer-events': 'none'
+      }));
+    }
+
+    var leftSide = (s.ch === 11 || s.ch === 12);
+    var labelX = leftSide ? x - 18 : x + 18;
+    var anchor = leftSide ? 'end' : 'start';
+
+    g.appendChild(el('text', {
+      x: labelX, y: y - 2, 'font-size': 11, fill: '#e8eaf2',
+      'text-anchor': anchor, 'pointer-events': 'none'
+    }, s.title));
+
+    g.appendChild(el('text', {
+      x: labelX, y: y + 11, 'font-size': 9.5, fill: '#8b91a5',
+      'text-anchor': anchor, 'pointer-events': 'none'
+    }, timeLabels[s.rank]));
+
+    svg.appendChild(g);
+
+    // ---- INTERACTIVITY ----
+    circle.addEventListener('mouseover', function (ch) {
+      return function () {
+        this.setAttribute('stroke-width', 5);
+      };
+    }(s.ch).bind(circle));
+
+    circle.addEventListener('mouseover', function (ch) {
+      return function () {
+        pathEls.forEach(function (p) {
+          var from = p.getAttribute('data-from');
+          var to = p.getAttribute('data-to');
+          if (String(from) === String(ch) || String(to) === String(ch)) {
+            p.setAttribute('opacity', 1);
+            p.setAttribute('stroke-width', 4);
+          }
+        });
+      };
+    }(s.ch));
+
+    circle.addEventListener('mouseout', function (ch) {
+      return function () {
+        this.setAttribute('stroke-width', 3);
+      };
+    }(s.ch).bind(circle));
+
+    circle.addEventListener('mouseout', function (ch) {
+      return function () {
+        pathEls.forEach(function (p) {
+          var from = p.getAttribute('data-from');
+          var to = p.getAttribute('data-to');
+          if (String(from) === String(ch) || String(to) === String(ch)) {
+            var isFlash = p.getAttribute('data-flash') === 'true';
+            p.setAttribute('opacity', isFlash ? 0.9 : 0.55);
+            p.setAttribute('stroke-width', 2.5);
+          }
+        });
+      };
+    }(s.ch));
+  });
+})();
+</script>
+
+</body>
+</html>

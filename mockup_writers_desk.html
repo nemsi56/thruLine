@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Throughline — Writer's Desk Mockup (Design B)</title>
+<style>
+  :root{
+    --paper:#f4eee0; --paper2:#efe7d4; --card:#fffdf6; --edge:#ddd2bc;
+    --ink:#2b2620; --mut:#847a6a; --faint:#a89d89;
+    --inv:#3d6c9e; --heist:#b07a35; --sub:#7b5ea7;
+    --red:#b3413a; --thread:#2e8b7a;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{height:100%;}
+  body{
+    background:var(--paper); color:var(--ink); overflow:hidden;
+    font:14px/1.5 "Iowan Old Style", Palatino, "Palatino Linotype", Georgia, serif;
+    background-image:radial-gradient(ellipse at 50% 0%, #faf6ea 0%, var(--paper) 55%);
+  }
+  .lbl{
+    font:700 10px/1 -apple-system, "Segoe UI", sans-serif;
+    letter-spacing:2px; color:var(--faint);
+  }
+
+  #app{height:100%; display:flex; flex-direction:column;}
+
+  /* ---------- header ---------- */
+  header{
+    flex:0 0 58px; display:flex; align-items:center; gap:16px; padding:0 26px;
+    border-bottom:1px solid var(--edge);
+  }
+  #brand{font-size:19px; font-weight:700; letter-spacing:.2px;}
+  #brand em{font-style:italic; font-weight:400; color:var(--mut);}
+  .pill{
+    font:600 10px/1 -apple-system, sans-serif; letter-spacing:1px; color:var(--mut);
+    border:1px solid var(--edge); border-radius:20px; padding:4px 10px; background:var(--card);
+  }
+  header .spacer{flex:1;}
+  .chip{
+    display:flex; align-items:center; gap:7px; font:600 12px/1 -apple-system, sans-serif;
+    color:var(--ink); background:var(--card); border:1px solid var(--edge);
+    border-radius:8px; padding:7px 12px; cursor:pointer; box-shadow:0 1px 2px #0001;
+  }
+  .chip .sw{width:9px; height:9px; border-radius:50%;}
+  .chip.issues{color:var(--red); border-color:#d8b3ad;}
+  .chip.issues b{
+    background:var(--red); color:#fff; border-radius:10px; min-width:18px; height:18px;
+    display:inline-flex; align-items:center; justify-content:center; font-size:11px;
+  }
+  .seg{display:flex; border:1px solid var(--edge); border-radius:8px; overflow:hidden; background:var(--card);}
+  .seg button{
+    font:600 11px/1 -apple-system, sans-serif; color:var(--mut); background:transparent;
+    border:0; padding:8px 12px; cursor:pointer;
+  }
+  .seg button.on{background:#e9e0cb; color:var(--ink);}
+
+  /* ---------- main board ---------- */
+  #main{flex:1; position:relative; min-height:0; padding:16px 26px 8px; display:flex; gap:0;}
+  #wires{position:absolute; inset:0; pointer-events:none; z-index:4;}
+
+  .colHead{display:flex; align-items:baseline; gap:10px; margin-bottom:10px;}
+  .colHead .sub{font-style:italic; font-size:12px; color:var(--faint); font-family:Georgia, serif; letter-spacing:0;}
+
+  /* ----- story time (left) ----- */
+  #story{flex:0 0 46%; display:flex; flex-direction:column; min-width:0;}
+  #board{position:relative; flex:1;}
+  #railSvg{position:absolute; inset:0; z-index:1;}
+  .era{
+    position:absolute; left:0; right:12px; border-radius:10px; z-index:0;
+  }
+  .era .lbl{position:absolute; top:8px; left:12px;}
+  .gapRow{
+    position:absolute; left:0; right:12px; display:flex; align-items:center; gap:10px; z-index:1;
+  }
+  .gapRow .dash{flex:1; border-top:2px dashed #cfc4ab;}
+  .gapRow span{font-style:italic; font-size:12px; color:var(--faint);}
+
+  .scard{
+    position:absolute; z-index:3; width:150px; transform:translate(-50%,-50%) rotate(var(--rot));
+    background:var(--card); border:1px solid var(--edge); border-radius:3px;
+    box-shadow:0 2px 5px #00000014, 0 1px 0 #fff inset;
+    padding:7px 10px 6px; cursor:grab;
+    border-left:3px solid var(--c);
+    transition:opacity .15s, box-shadow .15s;
+  }
+  .scard .t{font-size:12.5px; font-weight:700; line-height:1.25;}
+  .scard .m{
+    display:flex; justify-content:space-between; margin-top:3px;
+    font:11px/1 Georgia, serif; font-style:italic; color:var(--mut);
+  }
+  .scard .m .ch{font-style:normal; font-family:-apple-system, sans-serif; font-size:9.5px; color:var(--faint); letter-spacing:.5px;}
+  .warnStar{
+    position:absolute; top:-7px; right:-7px; width:14px; height:14px; border-radius:50%;
+    background:var(--red); color:#fff; display:none; align-items:center; justify-content:center;
+    font:700 9px/1 Georgia, serif;
+  }
+  .scard.warn .warnStar, .pgRow.warn .warnStar{display:flex;}
+
+  /* ----- the page (right) ----- */
+  #page{flex:0 0 27%; margin-left:auto; display:flex; flex-direction:column; min-width:0;}
+  #toc{
+    flex:1; display:flex; flex-direction:column; gap:5px;
+    background:var(--card); border:1px solid var(--edge); border-radius:4px;
+    box-shadow:0 3px 10px #00000012; padding:10px 12px;
+  }
+  .pgRow{
+    position:relative; flex:1; display:flex; align-items:center; gap:9px;
+    border-bottom:1px dotted #e4dbc6; cursor:grab; padding:0 4px;
+    transition:opacity .15s, background .15s, box-shadow .15s;
+  }
+  .pgRow:last-child{border-bottom:0;}
+  .pgRow .spine{width:4px; align-self:stretch; margin:4px 0; border-radius:2px; background:var(--c);}
+  .pgRow .n{
+    font:700 9px/1 -apple-system, sans-serif; color:var(--faint); letter-spacing:1px; width:34px;
+  }
+  .pgRow .t{font-size:12.5px; font-weight:600; flex:1; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .pgRow .fb{
+    font:700 8.5px/1 -apple-system, sans-serif; color:var(--heist); letter-spacing:.5px;
+    border:1px solid #d8c096; border-radius:3px; padding:2px 4px; background:#f7ecd8;
+  }
+  .pgRow .warnStar{top:50%; right:2px; transform:translateY(-50%);}
+  .divRow{
+    flex:0 0 20px; display:flex; align-items:center; gap:10px;
+  }
+  .divRow .rule{flex:1; border-top:1px solid var(--edge);}
+  .divRow span{font-style:italic; font-size:11.5px; color:var(--mut); letter-spacing:1px;}
+
+  /* ----- marginalia (far right) ----- */
+  #margin{flex:0 0 190px; position:relative; margin-left:22px;}
+  #margin .colHead{justify-content:flex-end;}
+  .note{
+    position:absolute; right:0; width:170px; z-index:5;
+    background:#fdf3ee; border:1px solid #e3c0ba; border-radius:2px;
+    box-shadow:0 2px 6px #00000018; padding:8px 10px; cursor:pointer;
+    font:italic 11.5px/1.45 Georgia, serif; color:#7a3a34;
+    transform:rotate(var(--rot)); transition:box-shadow .15s, transform .15s;
+  }
+  .note:hover{box-shadow:0 4px 10px #00000026;}
+  .note.active{box-shadow:0 0 0 2px var(--red), 0 4px 10px #00000026; transform:rotate(0deg);}
+  .note.dismissed{
+    background:#f3efe4; border-color:var(--edge); color:var(--mut);
+  }
+  .note .tag{
+    font:700 8.5px/1 -apple-system, sans-serif; letter-spacing:1.2px; font-style:normal;
+    color:var(--red); display:block; margin-bottom:3px;
+  }
+  .note.dismissed .tag{color:var(--faint);}
+  .note .act{font:10px/1 -apple-system, sans-serif; font-style:normal; color:var(--faint); margin-top:5px;}
+  .note .act u{cursor:pointer;}
+
+  /* hover / flag states */
+  body.hovering .scard:not(.hi), body.hovering .pgRow:not(.hi){opacity:.3;}
+  .scard.hi{box-shadow:0 0 0 2px var(--c), 0 5px 12px #00000022; opacity:1; z-index:6;}
+  .pgRow.hi{background:#f6efdc; box-shadow:inset 0 0 0 1px var(--c); opacity:1;}
+  .scard.flag{box-shadow:0 0 0 2px var(--red), 0 5px 12px #00000022; opacity:1; z-index:6;}
+  .pgRow.flag{background:#faece9; box-shadow:inset 0 0 0 1px var(--red); opacity:1;}
+  body.flagging .scard:not(.flag), body.flagging .pgRow:not(.flag){opacity:.25;}
+
+  footer{
+    flex:0 0 26px; display:flex; align-items:center; justify-content:center; gap:18px;
+    border-top:1px solid var(--edge); font:11px/1 Georgia, serif; font-style:italic; color:var(--faint);
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <div id="brand">Throughline <em>· The Glass Harbor</em></div>
+    <span class="pill">DESIGN B · WRITER'S DESK</span>
+    <div class="spacer"></div>
+    <div class="seg"><button class="on">Ordinal</button><button>True scale</button></div>
+    <button class="chip" id="threadChip"><span class="sw" style="background:var(--thread)"></span>Thread: Elena</button>
+    <button class="chip issues">Issues <b>2</b></button>
+  </header>
+
+  <div id="main">
+    <svg id="wires"></svg>
+
+    <div id="story">
+      <div class="colHead"><span class="lbl">STORY TIME</span><span class="sub">— when it happens, flowing down the page</span></div>
+      <div id="board"><svg id="railSvg"></svg></div>
+    </div>
+
+    <div id="page">
+      <div class="colHead"><span class="lbl">THE PAGE</span><span class="sub">— what the reader gets</span></div>
+      <div id="toc"></div>
+    </div>
+
+    <div id="margin">
+      <div class="colHead"><span class="lbl">MARGINALIA</span></div>
+    </div>
+  </div>
+
+  <footer>
+    <span>hover a scene or chapter to follow its thread across the desk</span><span>·</span>
+    <span>click a margin note to see the scenes it concerns</span><span>·</span>
+    <span>drag to retime or reorder (mocked)</span>
+  </footer>
+</div>
+
+<script>
+const RAILS = [
+  { name:'Investigation', color:'#3d6c9e', x:24 },
+  { name:'The Heist',     color:'#b07a35', x:52 },
+  { name:'Harbor Politics', color:'#7b5ea7', x:80 },
+];
+const SCENES = [
+  { id:'H1', title:'The Vault Job',              rail:1, y:7,  time:'Oct 1998', ch:2,  fb:true,  elena:true },
+  { id:'H2', title:'The Betrayal',               rail:1, y:14, time:'Oct 1998', ch:7,  fb:true },
+  { id:'H3', title:'The Fire',                   rail:1, y:21, time:'Nov 1998', ch:9,  fb:true,  elena:true },
+  { id:'I1', title:'A Body in the Harbor',       rail:0, y:33, time:'Day 1',    ch:1 },
+  { id:'I2', title:'The Rusted Key',             rail:0, y:41, time:'Day 2',    ch:3 },
+  { id:'S1', title:"Councilman's Offer",         rail:2, y:43, time:'Day 2',    ch:4 },
+  { id:'S2', title:'Dinner at the Overlook',     rail:2, y:52, time:'Day 3',    ch:6,  warn:true },
+  { id:'I3', title:'Marcus Talks',               rail:0, y:57, time:'Day 4',    ch:5 },
+  { id:'I4', title:'Elena, Alive',               rail:0, y:66, time:'Day 5',    ch:8,  elena:true },
+  { id:'S3', title:'The Vote',                   rail:2, y:76, time:'Day 6',    ch:10, warn:true },
+  { id:'I5', title:'Confrontation at the Docks', rail:0, y:80, time:'Day 6',    ch:11, warn:true, elena:true },
+  { id:'I6', title:'The Tide Goes Out',          rail:0, y:91, time:'Day 7',    ch:12, elena:true },
+];
+const NOTES = [
+  { id:'n1', tag:'REVEAL ORDER', dismissed:false, nearCh:6,
+    text:'Ch 6 mentions the warehouse fire — the reader doesn’t see it until Ch 9.',
+    scenes:['S2','H3'] },
+  { id:'n2', tag:'TWO PLACES AT ONCE', dismissed:false, nearCh:10,
+    text:'Reyes is at City Hall (Ch 10) and the docks (Ch 11) on the same evening, Day 6.',
+    scenes:['S3','I5'] },
+  { id:'n3', tag:'FLASHBACK · INTENTIONAL', dismissed:true, nearCh:2,
+    text:'Ch 2 jumps back ten years before Ch 1. Marked intentional.',
+    scenes:['H1'] },
+];
+
+const board = document.getElementById('board');
+const railSvg = document.getElementById('railSvg');
+const toc = document.getElementById('toc');
+const marginEl = document.getElementById('margin');
+const wires = document.getElementById('wires');
+const main = document.getElementById('main');
+
+/* era bands + gap */
+function era(y0, y1, color, label, side){
+  const d = document.createElement('div');
+  d.className = 'era';
+  d.style.top = y0+'%'; d.style.height = (y1-y0)+'%';
+  d.style.background = `linear-gradient(${color}14, ${color}05)`;
+  const pos = side === 'right' ? 'right:14px; left:auto;' : '';
+  d.innerHTML = `<span class="lbl" style="color:${color}aa; ${pos}">${label}</span>`;
+  board.appendChild(d);
+}
+era(0, 25, '#b07a35', '1998 · TEN YEARS EARLIER', 'left');
+era(28.5, 97, '#3d6c9e', '2008 · PRESENT DAY', 'right');
+const gap = document.createElement('div');
+gap.className = 'gapRow'; gap.style.top = '25.8%';
+gap.innerHTML = '<div class="dash"></div><span>≈ ten years pass</span><div class="dash"></div>';
+board.appendChild(gap);
+
+/* scene cards on rails */
+SCENES.forEach((s,i)=>{
+  const c = document.createElement('div');
+  c.className = 'scard' + (s.warn ? ' warn' : '');
+  c.dataset.id = s.id;
+  c.style.setProperty('--c', RAILS[s.rail].color);
+  c.style.setProperty('--rot', (i%2 ? .5 : -.4) + 'deg');
+  c.style.left = RAILS[s.rail].x + '%';
+  c.style.top = s.y + '%';
+  c.innerHTML = `<div class="warnStar">!</div><div class="t">${s.title}</div>
+                 <div class="m"><span>${s.time}</span><span class="ch">CH ${s.ch}</span></div>`;
+  board.appendChild(c);
+  s.el = c;
+});
+
+/* table of contents (reading order) */
+const ordered = [...SCENES].sort((a,b)=>a.ch-b.ch);
+ordered.forEach(s=>{
+  if(s.ch === 7){
+    const d = document.createElement('div');
+    d.className = 'divRow';
+    d.innerHTML = '<div class="rule"></div><span>Part II</span><div class="rule"></div>';
+    toc.appendChild(d);
+  }
+  const r = document.createElement('div');
+  r.className = 'pgRow' + (s.warn ? ' warn' : '');
+  r.dataset.id = s.id;
+  r.style.setProperty('--c', RAILS[s.rail].color);
+  r.innerHTML = `<div class="spine"></div><span class="n">CH ${s.ch}</span>
+                 <span class="t">${s.title}</span>` +
+                (s.fb ? '<span class="fb">1998</span>' : '') +
+                `<div class="warnStar">!</div>`;
+  toc.appendChild(r);
+  s.pgEl = r;
+});
+
+/* margin notes */
+NOTES.forEach((n,i)=>{
+  const d = document.createElement('div');
+  d.className = 'note' + (n.dismissed ? ' dismissed' : '');
+  d.style.setProperty('--rot', (i%2 ? -1 : 1.2) + 'deg');
+  d.innerHTML = `<span class="tag">${n.tag}</span>${n.text}
+    <div class="act">${n.dismissed ? '<u>restore warning</u>' : '<u>mark intentional</u>'}</div>`;
+  marginEl.appendChild(d);
+  n.el = d;
+  d.addEventListener('click', ()=>{
+    const on = d.classList.toggle('active');
+    NOTES.forEach(x=>{ if(x!==n) x.el.classList.remove('active'); });
+    document.body.classList.toggle('flagging', on);
+    document.querySelectorAll('.flag').forEach(x=>x.classList.remove('flag'));
+    if(on) n.scenes.forEach(id=>{
+      const s = SCENES.find(x=>x.id===id);
+      s.el.classList.add('flag'); s.pgEl.classList.add('flag');
+    });
+    draw();
+  });
+});
+
+/* geometry helpers */
+function rectIn(el, ref){
+  const r = el.getBoundingClientRect(), q = ref.getBoundingClientRect();
+  return { l:r.left-q.left, r:r.right-q.left, t:r.top-q.top, b:r.bottom-q.top,
+           cx:r.left+r.width/2-q.left, cy:r.top+r.height/2-q.top };
+}
+
+function draw(){
+  /* position notes beside their chapter rows */
+  NOTES.forEach(n=>{
+    const s = SCENES.find(x=>x.ch===n.nearCh);
+    const rr = rectIn(s.pgEl, marginEl);
+    n.el.style.top = Math.max(28, rr.cy - n.el.offsetHeight/2) + 'px';
+  });
+
+  const hovId = (document.querySelector('.scard.hi')||{dataset:{}}).dataset.id;
+  const flags = new Set([...document.querySelectorAll('.scard.flag')].map(e=>e.dataset.id));
+  const flagging = document.body.classList.contains('flagging');
+  const hovering = document.body.classList.contains('hovering');
+  let out = '';
+
+  /* mapping wires: story card right edge -> toc row left edge */
+  SCENES.forEach(s=>{
+    const a = rectIn(s.el, main), b = rectIn(s.pgEl, main);
+    const dx = Math.max(50, (b.l - a.r)/2);
+    let col = RAILS[s.rail].color, op = .4, w = 1.5;
+    if(hovering) op = (s.id===hovId) ? .95 : .06;
+    if(flagging){ op = flags.has(s.id) ? .95 : .05; if(flags.has(s.id)) col = 'var(--red)'; }
+    if(s.id===hovId || flags.has(s.id)) w = 2.5;
+    out += `<path d="M ${a.r} ${a.cy} C ${a.r+dx} ${a.cy}, ${b.l-dx} ${b.cy}, ${b.l} ${b.cy}"
+            fill="none" stroke="${col}" stroke-width="${w}" opacity="${op}"/>`;
+  });
+
+  /* red dashed threads: note -> chapter row */
+  NOTES.forEach(n=>{
+    if(n.dismissed && !n.el.classList.contains('active')) return;
+    const s = SCENES.find(x=>x.ch===n.nearCh);
+    const a = rectIn(n.el, main), b = rectIn(s.pgEl, main);
+    out += `<path d="M ${a.l} ${a.t+16} C ${a.l-24} ${a.t+16}, ${b.r+24} ${b.cy}, ${b.r} ${b.cy}"
+            fill="none" stroke="var(--red)" stroke-width="1.2" stroke-dasharray="4 3"
+            opacity="${n.el.classList.contains('active') ? .9 : .45}"/>`;
+  });
+  wires.innerHTML = out;
+  wires.setAttribute('width', main.clientWidth);
+  wires.setAttribute('height', main.clientHeight);
+
+  /* rails + Elena thread (under cards) */
+  let rs = '';
+  RAILS.forEach(r=>{
+    const x = board.clientWidth * r.x/100;
+    rs += `<line x1="${x}" y1="${board.clientHeight*.04}" x2="${x}" y2="${board.clientHeight*.96}"
+           stroke="${r.color}" stroke-width="2.5" opacity=".25"/>
+           <circle cx="${x}" cy="${board.clientHeight*.04}" r="4" fill="${r.color}" opacity=".5"/>`;
+  });
+  if(threadOn){
+    const pts = SCENES.filter(s=>s.elena).map(s=>rectIn(s.el, board))
+                      .sort((p,q)=>p.cy-q.cy);
+    if(pts.length>1){
+      let d = `M ${pts[0].cx} ${pts[0].cy}`;
+      for(let i=1;i<pts.length;i++){
+        const p=pts[i-1], q=pts[i], my=(p.cy+q.cy)/2;
+        d += ` C ${p.cx} ${my}, ${q.cx} ${my}, ${q.cx} ${q.cy}`;
+      }
+      rs += `<path d="${d}" fill="none" stroke="var(--thread)" stroke-width="2.5" opacity=".55"/>`
+          + pts.map(p=>`<circle cx="${p.cx}" cy="${p.cy}" r="4.5" fill="var(--thread)" stroke="#f4eee0" stroke-width="2"/>`).join('');
+    }
+  }
+  railSvg.innerHTML = rs;
+  railSvg.setAttribute('width', board.clientWidth);
+  railSvg.setAttribute('height', board.clientHeight);
+}
+
+/* hover linking */
+SCENES.forEach(s=>{
+  [s.el, s.pgEl].forEach(el=>{
+    el.addEventListener('mouseenter', ()=>{
+      document.body.classList.add('hovering');
+      s.el.classList.add('hi'); s.pgEl.classList.add('hi'); draw();
+    });
+    el.addEventListener('mouseleave', ()=>{
+      document.body.classList.remove('hovering');
+      s.el.classList.remove('hi'); s.pgEl.classList.remove('hi'); draw();
+    });
+  });
+});
+
+let threadOn = true;
+document.getElementById('threadChip').addEventListener('click', function(){
+  threadOn = !threadOn; this.style.opacity = threadOn ? 1 : .45; draw();
+});
+
+window.addEventListener('resize', draw);
+requestAnimationFrame(draw);
+</script>
+</body>
+</html>

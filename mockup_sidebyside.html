@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Throughline — Side-by-Side Mockup</title>
+<style>
+  :root{
+    --bg:#12141a; --panel:#191c25; --panel2:#151821; --line:#2a2f3d;
+    --tx:#e8eaf2; --mut:#8b91a5; --faint:#5a6072;
+    --inv:#5aa9e6; --heist:#e0a458; --sub:#a78bfa;
+    --thread:#3fd6b7; --red:#ef6a6a; --ok:#6ad19a;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{height:100%;}
+  body{
+    background:var(--bg); color:var(--tx); overflow:hidden;
+    font:13px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  }
+  #app{height:100%; display:flex; flex-direction:column;}
+
+  /* ---------- top bar ---------- */
+  #topbar{
+    display:flex; align-items:center; gap:14px; padding:0 16px; height:52px;
+    background:var(--panel); border-bottom:1px solid var(--line); flex:0 0 auto;
+  }
+  #logo{display:flex; align-items:baseline; gap:8px;}
+  #logo b{font-size:15px; letter-spacing:.4px;}
+  #logo b span{color:var(--thread);}
+  .pill{font-size:10px; color:var(--mut); border:1px solid var(--line); border-radius:20px; padding:1px 8px;}
+  #proj{color:var(--mut); font-size:13px;}
+  #proj b{color:var(--tx); font-weight:600;}
+  #topbar .spacer{flex:1;}
+  .seg{display:flex; border:1px solid var(--line); border-radius:8px; overflow:hidden;}
+  .seg button{
+    background:transparent; color:var(--mut); border:0; padding:5px 12px;
+    font:inherit; font-size:12px; cursor:pointer;
+  }
+  .seg button.on{background:#232837; color:var(--tx);}
+  .chip{
+    display:flex; align-items:center; gap:6px; border:1px solid var(--line);
+    border-radius:8px; padding:5px 10px; font-size:12px; color:var(--mut); cursor:pointer;
+    background:transparent;
+  }
+  .chip b{color:var(--tx); font-weight:600;}
+  .chip .dot{width:8px; height:8px; border-radius:50%; background:var(--thread);}
+  #confBtn{border-color:#563040;}
+  #confBtn .n{
+    background:var(--red); color:#fff; border-radius:10px; min-width:18px; height:18px;
+    display:inline-flex; align-items:center; justify-content:center; font-size:11px; font-weight:700;
+  }
+
+  /* ---------- main split ---------- */
+  #main{flex:1; display:flex; min-height:0;}
+  #stage{flex:1; position:relative; display:flex; flex-direction:column; min-width:0; padding:14px 18px 10px;}
+  #wires{position:absolute; inset:0; pointer-events:none; z-index:5;}
+
+  .viewLabel{
+    font-size:10px; letter-spacing:1.6px; color:var(--faint); font-weight:700;
+    margin-bottom:6px; display:flex; align-items:center; gap:10px;
+  }
+  .viewLabel small{letter-spacing:0; font-weight:400; color:var(--faint); text-transform:none;}
+
+  /* ---------- chronology ---------- */
+  #chron{flex:0 0 auto;}
+  #chronBody{display:flex;}
+  #laneLabels{flex:0 0 128px; padding-top:26px;}
+  .laneLabel{
+    height:78px; display:flex; flex-direction:column; justify-content:center;
+    font-size:11px; color:var(--mut); font-weight:600; padding-right:12px;
+    border-right:2px solid var(--line);
+  }
+  .laneLabel i{font-style:normal; font-size:10px; color:var(--faint); font-weight:400;}
+  .laneLabel .sw{width:18px; height:3px; border-radius:2px; margin-bottom:4px;}
+  #track{position:relative; flex:1; height:calc(26px + 78px*3); margin-left:12px;}
+  #trackSvg{position:absolute; inset:0; z-index:1; pointer-events:none;}
+  .band{
+    position:absolute; top:0; bottom:0; border-radius:8px; z-index:0;
+  }
+  .band .bandLabel{
+    position:absolute; top:4px; left:10px; font-size:10px; letter-spacing:1.2px;
+    font-weight:700; white-space:nowrap;
+  }
+  .gapMark{
+    position:absolute; top:26px; bottom:6px; width:0; border-left:1px dashed #3a4152; z-index:0;
+  }
+  .gapMark span{
+    position:absolute; top:-20px; left:50%; transform:translateX(-50%);
+    font-size:9px; color:var(--faint); white-space:nowrap; letter-spacing:.5px;
+  }
+  .laneRow{position:absolute; left:0; right:0; height:78px; border-bottom:1px dashed #232838;}
+
+  .scene{
+    position:absolute; z-index:2; width:96px; transform:translateX(-50%);
+    background:var(--panel); border:1px solid var(--line); border-radius:8px;
+    padding:6px 8px 5px; cursor:grab; transition:opacity .15s, box-shadow .15s, border-color .15s;
+    border-top:3px solid var(--c);
+  }
+  .scene .t{font-size:11px; font-weight:600; line-height:1.25;}
+  .scene .m{font-size:9.5px; color:var(--mut); margin-top:3px; display:flex; justify-content:space-between;}
+  .scene .m .ch{color:var(--faint);}
+  .warnDot{
+    position:absolute; top:-5px; right:-5px; width:10px; height:10px; border-radius:50%;
+    background:var(--red); border:2px solid var(--bg); display:none;
+  }
+  .scene.warn .warnDot, .msCard.warn .warnDot{display:block;}
+
+  /* ---------- mapping zone ---------- */
+  #mapzone{flex:1; min-height:84px; position:relative;}
+  #mapzone .hint{
+    position:absolute; left:50%; bottom:2px; transform:translateX(-50%);
+    font-size:10px; color:#4a5064; letter-spacing:.4px; white-space:nowrap;
+  }
+
+  /* ---------- manuscript ---------- */
+  #ms{flex:0 0 auto; padding-bottom:2px;}
+  #msRow{display:flex; gap:8px; margin-left:140px;}
+  .msCard{
+    position:relative; flex:1; min-width:0; background:var(--panel); border:1px solid var(--line);
+    border-radius:8px; padding:6px 8px 6px; cursor:grab; border-top:3px solid var(--c);
+    transition:opacity .15s, box-shadow .15s, border-color .15s;
+  }
+  .msCard .ch{font-size:9px; letter-spacing:1px; color:var(--faint); font-weight:700;}
+  .msCard .t{font-size:10.5px; font-weight:600; line-height:1.2; margin-top:2px; hyphens:auto;
+    display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden;}
+  .msCard .fb{
+    position:absolute; top:5px; right:6px; font-size:8.5px; color:var(--heist);
+    border:1px solid #4a3b26; border-radius:4px; padding:0 3px; letter-spacing:.5px;
+  }
+
+  /* hover / highlight states */
+  body.hovering .scene:not(.hi), body.hovering .msCard:not(.hi){opacity:.28;}
+  .scene.hi, .msCard.hi{
+    box-shadow:0 0 0 1px var(--c), 0 6px 18px rgba(0,0,0,.5); border-color:var(--c); opacity:1;
+  }
+  .scene.flag, .msCard.flag{
+    box-shadow:0 0 0 2px var(--red), 0 6px 18px rgba(0,0,0,.5); border-color:var(--red); opacity:1;
+  }
+  body.flagging .scene:not(.flag), body.flagging .msCard:not(.flag){opacity:.25;}
+
+  /* ---------- conflicts panel ---------- */
+  #conflicts{
+    flex:0 0 252px; background:var(--panel2); border-left:1px solid var(--line);
+    display:flex; flex-direction:column; z-index:6;
+  }
+  #conflicts h2{
+    font-size:10px; letter-spacing:1.6px; color:var(--faint); font-weight:700;
+    padding:14px 14px 8px;
+  }
+  .conf{
+    margin:0 10px 8px; padding:9px 10px; border:1px solid var(--line); border-radius:8px;
+    cursor:pointer; transition:border-color .15s, background .15s;
+  }
+  .conf:hover{background:#1c202c;}
+  .conf.active{border-color:var(--red); background:#221a20;}
+  .conf .head{display:flex; align-items:center; gap:7px; font-size:11px; font-weight:700;}
+  .conf .head .sev{width:8px; height:8px; border-radius:50%; flex:0 0 auto;}
+  .conf.error .sev{background:var(--red);}
+  .conf.dismissed .sev{background:#4a5064;}
+  .conf.dismissed{opacity:.62;}
+  .conf .body{font-size:10.5px; color:var(--mut); margin-top:4px; line-height:1.4;}
+  .conf .act{font-size:9.5px; color:var(--faint); margin-top:5px;}
+  .conf .act u{cursor:pointer;}
+  #confFoot{margin-top:auto; padding:10px 14px; font-size:9.5px; color:#454b5c; border-top:1px solid var(--line); line-height:1.5;}
+
+  /* ---------- footer ---------- */
+  #footer{
+    flex:0 0 26px; display:flex; align-items:center; justify-content:center; gap:20px;
+    background:var(--panel); border-top:1px solid var(--line);
+    font-size:10.5px; color:var(--faint);
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="topbar">
+    <div id="logo"><b>Through<span>line</span></b><span class="pill">mockup</span></div>
+    <div id="proj">Project: <b>The Glass Harbor</b></div>
+    <div class="spacer"></div>
+    <div class="seg" title="View">
+      <button>Chronology</button><button class="on">Side-by-Side</button><button>Manuscript</button>
+    </div>
+    <div class="seg" title="Axis mode"><button class="on">Ordinal</button><button>True scale</button></div>
+    <button class="chip">Lanes: <b>Storyline</b> ▾</button>
+    <button class="chip" id="threadChip"><span class="dot"></span>Thread: <b>Elena</b></button>
+    <button class="chip" id="confBtn">Conflicts <span class="n">2</span></button>
+  </div>
+
+  <div id="main">
+    <div id="stage">
+      <svg id="wires"></svg>
+
+      <div id="chron">
+        <div class="viewLabel">CHRONOLOGY <small>— when it happens</small></div>
+        <div id="chronBody">
+          <div id="laneLabels"></div>
+          <div id="track"><svg id="trackSvg"></svg></div>
+        </div>
+      </div>
+
+      <div id="mapzone">
+        <div class="hint">each line connects a scene's place in time to its place on the page — crossings are flashbacks &amp; reveals</div>
+      </div>
+
+      <div id="ms">
+        <div class="viewLabel">MANUSCRIPT <small>— what the reader gets, in order</small></div>
+        <div id="msRow"></div>
+      </div>
+    </div>
+
+    <aside id="conflicts">
+      <h2>CONFLICTS &amp; NOTES</h2>
+      <div id="confList"></div>
+      <div id="confFoot">The solver is a linter, not a gate — nothing here blocks you. Mark any warning as intentional and it fades to a note.</div>
+    </aside>
+  </div>
+
+  <div id="footer">
+    <span>Hover a scene to trace it across both views</span><span>·</span>
+    <span>Click a conflict to see the scenes involved</span><span>·</span>
+    <span>Drag to retime, re-lane, or reorder (mocked)</span>
+  </div>
+</div>
+
+<script>
+const LANES = [
+  { name:'Investigation', sub:'2008 · present day', color:'var(--inv)', raw:'#5aa9e6' },
+  { name:'The Heist',     sub:'1998 · backstory',   color:'var(--heist)', raw:'#e0a458' },
+  { name:'Harbor Politics', sub:'subplot',          color:'var(--sub)', raw:'#a78bfa' },
+];
+
+const SCENES = [
+  { id:'H1', title:'The Vault Job',            lane:1, x:5,  time:'Oct 1998', ch:2,  fb:true,  elena:true },
+  { id:'H2', title:'The Betrayal',             lane:1, x:14, time:'Oct 1998', ch:7,  fb:true },
+  { id:'H3', title:'The Fire',                 lane:1, x:23, time:'Nov 1998', ch:9,  fb:true,  elena:true },
+  { id:'I1', title:'A Body in the Harbor',     lane:0, x:35, time:'Day 1',    ch:1 },
+  { id:'I2', title:'The Rusted Key',           lane:0, x:44, time:'Day 2',    ch:3 },
+  { id:'S1', title:"Councilman's Offer",       lane:2, x:44, time:'Day 2',    ch:4 },
+  { id:'S2', title:'Dinner at the Overlook',   lane:2, x:53, time:'Day 3',    ch:6,  warn:true },
+  { id:'I3', title:'Marcus Talks',             lane:0, x:62, time:'Day 4',    ch:5 },
+  { id:'I4', title:'Elena, Alive',             lane:0, x:71, time:'Day 5',    ch:8,  elena:true },
+  { id:'S3', title:'The Vote',                 lane:2, x:81, time:'Day 6',    ch:10, warn:true },
+  { id:'I5', title:'Confrontation at the Docks', lane:0, x:81, time:'Day 6',  ch:11, warn:true, elena:true },
+  { id:'I6', title:'The Tide Goes Out',        lane:0, x:91, time:'Day 7',    ch:12, elena:true },
+];
+
+const CONFLICTS = [
+  { sev:'error', title:'Reveal before setup',
+    body:'“Dinner at the Overlook” (Ch 6) references the warehouse fire — but “The Fire” isn’t revealed to the reader until Ch 9.',
+    scenes:['S2','H3'] },
+  { sev:'error', title:'Character in two places',
+    body:'Det. Reyes is at City Hall (“The Vote”, Ch 10) and at the docks (“Confrontation at the Docks”, Ch 11) on the same evening — Day 6.',
+    scenes:['S3','I5'] },
+  { sev:'dismissed', title:'Flashback — marked intentional',
+    body:'“The Vault Job” (Ch 2) jumps ten years before Ch 1. You marked this crossing intentional.',
+    scenes:['H1'] },
+];
+
+const LANE_TOP = 26, LANE_H = 78;
+const track = document.getElementById('track');
+const trackSvg = document.getElementById('trackSvg');
+const msRow = document.getElementById('msRow');
+const wires = document.getElementById('wires');
+const stage = document.getElementById('stage');
+
+/* lane labels + rows */
+const labels = document.getElementById('laneLabels');
+LANES.forEach((l,i)=>{
+  const d = document.createElement('div');
+  d.className = 'laneLabel';
+  d.innerHTML = `<span class="sw" style="background:${l.color}"></span>${l.name}<i>${l.sub}</i>`;
+  labels.appendChild(d);
+  const row = document.createElement('div');
+  row.className = 'laneRow';
+  row.style.top = (LANE_TOP + i*LANE_H) + 'px';
+  track.appendChild(row);
+});
+
+/* era bands + gap marker */
+function band(x0, x1, color, label){
+  const b = document.createElement('div');
+  b.className = 'band';
+  b.style.left = x0+'%'; b.style.width = (x1-x0)+'%';
+  b.style.background = `linear-gradient(${color}12, ${color}06)`;
+  b.innerHTML = `<span class="bandLabel" style="color:${color}cc">${label}</span>`;
+  track.appendChild(b);
+}
+band(0, 28, '#e0a458', '1998 · TEN YEARS EARLIER');
+band(31, 100, '#5aa9e6', '2008 · PRESENT DAY');
+const gap = document.createElement('div');
+gap.className = 'gapMark'; gap.style.left = '29.5%';
+gap.innerHTML = '<span>≈ 10 yrs</span>';
+track.appendChild(gap);
+
+/* chronology cards */
+SCENES.forEach(s=>{
+  const c = document.createElement('div');
+  c.className = 'scene' + (s.warn ? ' warn' : '');
+  c.dataset.id = s.id;
+  c.style.setProperty('--c', LANES[s.lane].color);
+  c.style.left = s.x + '%';
+  c.style.top = (LANE_TOP + s.lane*LANE_H + 10) + 'px';
+  c.innerHTML = `<div class="warnDot"></div><div class="t">${s.title}</div>
+                 <div class="m"><span>${s.time}</span><span class="ch">Ch ${s.ch}</span></div>`;
+  track.appendChild(c);
+  s.el = c;
+});
+
+/* manuscript cards */
+[...SCENES].sort((a,b)=>a.ch-b.ch).forEach(s=>{
+  const c = document.createElement('div');
+  c.className = 'msCard' + (s.warn ? ' warn' : '');
+  c.dataset.id = s.id;
+  c.style.setProperty('--c', LANES[s.lane].color);
+  c.innerHTML = `<div class="warnDot"></div><div class="ch">CH ${s.ch}</div><div class="t">${s.title}</div>`
+              + (s.fb ? '<div class="fb">1998</div>' : '');
+  msRow.appendChild(c);
+  s.msEl = c;
+});
+
+/* conflicts panel */
+const confList = document.getElementById('confList');
+CONFLICTS.forEach(cf=>{
+  const d = document.createElement('div');
+  d.className = 'conf ' + cf.sev;
+  d.innerHTML = `<div class="head"><span class="sev"></span>${cf.title}</div>
+                 <div class="body">${cf.body}</div>
+                 <div class="act">${cf.sev==='error' ? '<u>show scenes</u> · <u>mark intentional</u>' : '<u>restore warning</u>'}</div>`;
+  confList.appendChild(d);
+  d.addEventListener('click', ()=>{
+    const on = d.classList.toggle('active');
+    document.querySelectorAll('.conf').forEach(x=>{ if(x!==d) x.classList.remove('active'); });
+    document.body.classList.toggle('flagging', on);
+    document.querySelectorAll('.flag').forEach(x=>x.classList.remove('flag'));
+    if(on) cf.scenes.forEach(id=>{
+      const s = SCENES.find(x=>x.id===id);
+      s.el.classList.add('flag'); s.msEl.classList.add('flag');
+    });
+    draw();
+  });
+});
+
+/* ------- wires + thread drawing ------- */
+function ctr(el, ref, edge){
+  const r = el.getBoundingClientRect(), q = ref.getBoundingClientRect();
+  return { x: r.left + r.width/2 - q.left,
+           y: (edge==='bottom' ? r.bottom : r.top) - q.top,
+           cy: r.top + r.height/2 - q.top };
+}
+function draw(){
+  /* mapping wires */
+  const hov = document.querySelector('.scene.hi');
+  const hovId = hov ? hov.dataset.id : null;
+  const flags = new Set([...document.querySelectorAll('.scene.flag')].map(e=>e.dataset.id));
+  const flagging = document.body.classList.contains('flagging');
+  let out = '';
+  SCENES.forEach(s=>{
+    const a = ctr(s.el, stage, 'bottom'), b = ctr(s.msEl, stage, 'top');
+    const dy = Math.max(40, (b.y - a.y) * 0.5);
+    const hi = s.id === hovId, fl = flags.has(s.id);
+    let op = 0.5, w = 1.6, col = LANES[s.lane].raw;
+    if(document.body.classList.contains('hovering')) op = hi ? 1 : 0.08;
+    if(flagging){ op = fl ? 1 : 0.06; if(fl){ col = '#ef6a6a'; } }
+    if(hi || fl) w = 2.6;
+    out += `<path d="M ${a.x} ${a.y} C ${a.x} ${a.y+dy}, ${b.x} ${b.y-dy}, ${b.x} ${b.y}"
+            fill="none" stroke="${col}" stroke-width="${w}" opacity="${op}"/>`;
+  });
+  wires.innerHTML = out;
+  wires.setAttribute('width', stage.clientWidth);
+  wires.setAttribute('height', stage.clientHeight);
+
+  /* Elena thread through chronology */
+  const pts = SCENES.filter(s=>s.elena)
+    .map(s=>ctr(s.el, track, 'top'))
+    .sort((p,q)=>p.x-q.x);
+  let t = '';
+  if(threadOn && pts.length > 1){
+    let d = `M ${pts[0].x} ${pts[0].cy}`;
+    for(let i=1;i<pts.length;i++){
+      const p = pts[i-1], q = pts[i], mx = (p.x+q.x)/2;
+      d += ` C ${mx} ${p.cy}, ${mx} ${q.cy}, ${q.x} ${q.cy}`;
+    }
+    t = `<path d="${d}" fill="none" stroke="#3fd6b7" stroke-width="2.5" opacity=".8"/>`
+      + pts.map(p=>`<circle cx="${p.x}" cy="${p.cy}" r="4" fill="#3fd6b7" stroke="#12141a" stroke-width="2"/>`).join('');
+  }
+  trackSvg.innerHTML = t;
+  trackSvg.setAttribute('width', track.clientWidth);
+  trackSvg.setAttribute('height', track.clientHeight);
+}
+
+/* hover linking */
+SCENES.forEach(s=>{
+  [s.el, s.msEl].forEach(el=>{
+    el.addEventListener('mouseenter', ()=>{
+      document.body.classList.add('hovering');
+      s.el.classList.add('hi'); s.msEl.classList.add('hi');
+      draw();
+    });
+    el.addEventListener('mouseleave', ()=>{
+      document.body.classList.remove('hovering');
+      s.el.classList.remove('hi'); s.msEl.classList.remove('hi');
+      draw();
+    });
+  });
+});
+
+/* thread toggle */
+let threadOn = true;
+document.getElementById('threadChip').addEventListener('click', function(){
+  threadOn = !threadOn;
+  this.style.opacity = threadOn ? 1 : .45;
+  draw();
+});
+
+window.addEventListener('resize', draw);
+requestAnimationFrame(draw);
+</script>
+</body>
+</html>
