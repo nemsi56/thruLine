@@ -44,7 +44,6 @@ function redrawWires() {
   svg.textContent = '';
   if (!stage.clientWidth || !stage.clientHeight) return;
 
-  var stageRect = stage.getBoundingClientRect();
   var hoveredEl = document.querySelector('.scene.hi, .msCard.hi');
   var hoveredId = hoveredEl ? hoveredEl.dataset.sceneId : null;
   var hovering = document.body.classList.contains('hovering');
@@ -52,14 +51,31 @@ function redrawWires() {
   var storylineById = {};
   P.storylines.forEach(function (st) { storylineById[st.id] = st; });
 
+  // One query for each card set instead of two document.querySelector() calls per scene
+  // (each of which is a fresh whole-document search); id lookups below are then O(1).
+  var chronById = {}, msById = {};
+  document.querySelectorAll('.scene[data-scene-id]').forEach(function (el) { chronById[el.dataset.sceneId] = el; });
+  document.querySelectorAll('.msCard[data-scene-id]').forEach(function (el) { msById[el.dataset.sceneId] = el; });
+
+  // Read phase: every getBoundingClientRect() (including the stage's) happens before any
+  // DOM write below — interleaving reads with the path appends further down would force
+  // a synchronous layout recalculation on every single scene.
+  var stageRect = stage.getBoundingClientRect();
+  var geo = [];
   P.scenes.forEach(function (s) {
     if (s.offscreen) return; // offscreen scenes have no manuscript position (§4.3)
-    var chronEl = document.querySelector('.scene[data-scene-id="' + s.id + '"]');
-    var msEl = document.querySelector('.msCard[data-scene-id="' + s.id + '"]');
+    var chronEl = chronById[s.id];
+    var msEl = msById[s.id];
     if (!chronEl || !msEl) return;
-
     var ar = chronEl.getBoundingClientRect();
     var br = msEl.getBoundingClientRect();
+    geo.push({ scene: s, ar: ar, br: br });
+  });
+
+  // Write phase: build every path (no further geometry reads) and append once.
+  var frag = document.createDocumentFragment();
+  geo.forEach(function (g) {
+    var s = g.scene, ar = g.ar, br = g.br;
     var ax = ar.left + ar.width / 2 - stageRect.left;
     var ay = ar.bottom - stageRect.top;
     var bx = br.left + br.width / 2 - stageRect.left;
@@ -92,8 +108,9 @@ function redrawWires() {
     path.setAttribute('stroke', color);
     path.setAttribute('stroke-width', width);
     path.setAttribute('opacity', opacity);
-    svg.appendChild(path);
+    frag.appendChild(path);
   });
+  svg.appendChild(frag);
 }
 
 window.addEventListener('resize', redrawWires);

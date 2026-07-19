@@ -396,6 +396,14 @@ function validateProject(obj) {
         seenSt[id] = true;
       });
     }
+    if (s.characterIds && !Array.isArray(s.characterIds)) fail('Scene ' + s.id + ' characterIds must be an array.');
+    if (s.characterIds) {
+      var seenCh = {};
+      s.characterIds.forEach(function (id) {
+        if (seenCh[id]) fail('Scene ' + s.id + ' has duplicate characterIds entry: ' + id);
+        seenCh[id] = true;
+      });
+    }
     if (s.anchor) {
       if (typeof s.anchor.date !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(s.anchor.date)) fail('Scene ' + s.id + ' has malformed anchor date.');
       if (s.anchor.time !== null && typeof s.anchor.time !== 'undefined' && !/^\d{2}:\d{2}$/.test(s.anchor.time)) fail('Scene ' + s.id + ' has malformed anchor time.');
@@ -490,6 +498,24 @@ function validateProject(obj) {
     var s = obj.scenes.find(function (x) { return x.id === id; });
     if (s && s.offscreen) fail('msOrder contains offscreen scene ' + id);
   });
+
+  // viewPrefs: optional, but if present every known field must be well-typed —
+  // sanitizeImportedProject merges this straight over the trusted defaults, so a
+  // malformed value here would otherwise reach the editor's view-mode/axis/panel logic.
+  if (typeof obj.viewPrefs !== 'undefined') {
+    var vp = obj.viewPrefs;
+    if (!vp || typeof vp !== 'object') {
+      fail('viewPrefs must be an object.');
+    } else {
+      if ('mode' in vp && ['chron', 'side', 'ms', 'braid'].indexOf(vp.mode) === -1) fail('viewPrefs.mode is invalid.');
+      if ('axis' in vp && ['ordinal', 'true'].indexOf(vp.axis) === -1) fail('viewPrefs.axis is invalid.');
+      if ('threadCharId' in vp && vp.threadCharId !== null && !isStr(vp.threadCharId)) fail('viewPrefs.threadCharId must be a string or null.');
+      if ('chronHeightPx' in vp && typeof vp.chronHeightPx !== 'number') fail('viewPrefs.chronHeightPx must be a number.');
+      if ('panelTab' in vp && ['inspector', 'conflicts'].indexOf(vp.panelTab) === -1) fail('viewPrefs.panelTab is invalid.');
+      if ('panelOpen' in vp && typeof vp.panelOpen !== 'boolean') fail('viewPrefs.panelOpen must be a boolean.');
+      if ('pxPerScene' in vp && typeof vp.pxPerScene !== 'number') fail('viewPrefs.pxPerScene must be a number.');
+    }
+  }
 
   return { ok: errs.length === 0, errors: errs };
 }

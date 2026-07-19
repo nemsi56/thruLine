@@ -53,6 +53,7 @@ function _msDragBegin(e) {
   var d = _msDrag;
   d.active = true;
   setDragActive(true);
+  clearHighlight(); // see chron.js's _chronDragBegin for why this can't rely on mouseleave
 
   var row = document.getElementById('msRow');
   var srcEl = row.querySelector('.msCard[data-scene-id="' + d.sceneId + '"]');
@@ -364,9 +365,16 @@ function closeDividerPopover() {
   document.removeEventListener('click', _dividerPopoverOutsideClick);
 }
 
+function closeDividerContextMenu() {
+  var menu = document.getElementById('dividerContextMenu');
+  if (menu) menu.remove();
+  document.removeEventListener('click', _dividerContextMenuOutsideClick);
+}
+
 function manuscriptRowContextMenu(e) {
   e.preventDefault();
   closeDividerPopover();
+  closeDividerContextMenu(); // see chron.js's closeMarkerContextMenu — same accumulation risk
   var row = document.getElementById('msRow');
 
   // Find the card nearest to the right of the click point (in flex/DOM order,
@@ -389,7 +397,7 @@ function manuscriptRowContextMenu(e) {
     commit('Add divider', function (proj) {
       proj.dividers.push({ id: newId('dv_'), label: 'New divider', beforeSceneId: beforeSceneId });
     });
-    menu.remove();
+    closeDividerContextMenu();
   });
   menu.appendChild(addBtn);
   document.body.appendChild(menu);

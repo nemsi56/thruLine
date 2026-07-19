@@ -265,6 +265,14 @@ function commit(label, fn){ pushUndo(label); fn(P); saveProject(); }
 Wrap `localStorage.setItem` in try/catch; on failure show one alert per session
 ("Changes may not be saved — export a backup"), not one per edit.
 
+> **Known gap (found in audit, July 2026):** `saveProject()` calls `updateIndexEntry(P)`
+> unconditionally, even when the preceding `safeSetItem(LS_PROJ_KEY(...), ...)` returned
+> `false` (quota exceeded). `tl_index` then claims a scene count/`modifiedAt` for data
+> that was never actually written to `tl_proj_<uid>`. Low-severity (quota failures are
+> rare and the user is already warned), but the fix is small: only call
+> `updateIndexEntry` when `safeSetItem` succeeded. Not fixed as part of the July 2026
+> audit pass; left for a future milestone.
+
 ### 5.3 Undo/redo
 
 Snapshot-based: `pushUndo` deep-copies the data portion of the project (everything
@@ -315,6 +323,14 @@ Scenes evenly spaced in `chronOrder` order: `x = (i + 0.5) / N * 100`.
    enforcing a minimum gap of `cardWidthPx / trackWidthPx * 100` percent by pushing
    scenes rightward. (Cards center on x via `translateX(-50%)`.)
 
+> **Known gap (found in audit, July 2026):** the collision-pass sweep only pushes
+> rightward and never clamps or renormalizes against the 100% track edge, so a dense
+> lane near the right edge can place a card's x past 100 (off the visible track). In
+> practice this is bounded by how many anchored scenes cluster in one lane near the same
+> timestamp — uncommon, and the card just renders partially off-screen rather than
+> crashing. Not fixed as part of the July 2026 audit pass; a real fix would renormalize
+> the whole lane's spacing to fit [0,100] when the naive sweep overflows.
+
 Formatting helpers: `fmtAnchor(anchor)` → `"Oct 12, 1998"` / `"Oct 12, 1998 · 21:30"`;
 relative gap label `fmtGap(ms)` → `"3 days"`, `"≈ 10 yrs"`.
 
@@ -361,6 +377,20 @@ color, with a 4px dot per scene. Thread picker lists all characters; "None" hide
 a small label at top (e.g. "TEN YEARS EARLIER", "PART II"). Add via track context menu
 (right-click → "Add marker here"); edit/delete via clicking the label (small popover:
 text input + Delete). Markers are cosmetic — the conflict engine ignores them.
+
+> **Fixed in audit, July 2026:** right-clicking the track twice without dismissing the
+> first "Add marker here" menu appended a second `#markerContextMenu` div and a second
+> `document` click listener without removing the first — the outside-click handler only
+> ever resolves `getElementById('markerContextMenu')`, which always returns the first
+> same-id node, so later menus/listeners could never find "their" menu to clean up and
+> lingered until Escape happened to remove one of them. Same issue existed for the
+> manuscript strip's "Add divider here" menu (`manuscriptRowContextMenu` in
+> `manuscript.js`). Fixed by adding `closeMarkerContextMenu()` / `closeDividerContextMenu()`
+> helpers that remove both the DOM node and the listener, called at the start of each
+> context-menu opener (so a stale one is always cleared before a new one opens), from
+> the "Add …" button's own click handler, and from editor-init.js's Escape handler —
+> replacing the ad hoc `menu.remove()` calls that previously existed in only some of
+> those places.
 
 ### 7.5 Drag behavior (chronology)
 
@@ -445,6 +475,17 @@ width 2.6, opacity 1, others 0.06. `redrawWires()` is called from `refreshAll()`
 ResizeObserver, divider drags, scroll (if any), and hover changes. Rebuild all paths
 each call (n ≤ a few hundred; no incremental diffing).
 
+> **Fixed in audit, July 2026:** the original per-scene loop interleaved
+> `getBoundingClientRect()` reads with `svg.appendChild(path)` writes on every
+> iteration, forcing a synchronous layout recalculation each time — real cost on a
+> project with many scenes, since this runs on every hover and every commit. Rewritten
+> as three phases: (1) one `querySelectorAll` per card type instead of a fresh
+> `document.querySelector` per scene per card, (2) a read-only pass collecting every
+> card's `getBoundingClientRect()`, (3) a write-only pass building all `<path>`s into a
+> `DocumentFragment` and appending once. If you're implementing this from scratch,
+> preserve that read/write separation — it's easy to reintroduce the thrash by moving a
+> single read back inside the write loop.
+
 ## 9.5 Braid view (`braid.js`)
 
 Read-only structure chart; design target `mockup_braid.html`. One `<svg>` inside a
@@ -483,6 +524,17 @@ horizontal scroll container filling the stage. No dragging, no editing.
 `mouseenter` on a card (either view) adds `.hi` to both of that scene's cards, sets a
 `hovering` class on `<body>` (dims non-`.hi` cards via CSS), and redraws wires.
 `mouseleave` reverses. Hover does nothing during a drag.
+
+> **Fixed in audit, July 2026:** "hover does nothing during a drag" was implemented as
+> an early return at the top of `highlightScene()` — which also swallows the
+> `mouseleave`(`on=false`) call that starting a drag naturally triggers (the cursor
+> moves off the card's original position). Nothing else cleared hover state afterward
+> (`clearHighlight()` existed in `wires.js` but had no caller anywhere), so the dragged
+> card, its counterpart, and its wire stayed highlighted/others stayed dimmed after the
+> drag ended, until the user happened to hover a different card. Fix: both drag-begin
+> functions (`_chronDragBegin` in `chron.js`, `_msDragBegin` in `manuscript.js`) now call
+> `clearHighlight()` immediately after `setDragActive(true)`, before the guard in
+> `highlightScene()` can start blocking updates.
 
 ### 10.2 Selection & inspector
 
@@ -607,6 +659,16 @@ conflict toggles **flag mode**: involved scenes get `.flag` (red ring) in both v
 wires per §9, everything else dims; clicking again, clicking another conflict, or
 Escape clears it. Warn-dots on cards reflect membership in any non-dismissed conflict.
 
+> **Fixed in audit, July 2026:** in `styles.css`, the hover-dim rule
+> `body.hovering .scene:not(.hi)` (3 classes of specificity) beat `.scene.flag`
+> (2 classes) regardless of source order, so hovering ANY card while flag mode was
+> active dimmed the flagged scenes back down to .28 — defeating flag mode's entire
+> purpose. Fixed by scoping the hover-dim selector to `:not(.hi):not(.flag)`. If you're
+> implementing flag mode and hover-dim as separate CSS rules, either keep them mutually
+> exclusive like this or unify them into one rule that computes the right opacity per
+> state, since specificity math between two independently-authored rules is easy to get
+> backwards.
+
 ## 13. Export / import
 
 ### 13.1 Export
@@ -621,17 +683,30 @@ message and touch nothing:
 - `schemaVersion === 1`; required top-level arrays present and of correct type.
 - Every id a string; scene ids unique; storyline/character/location/reveal/constraint
   ids unique; every reference (storylineId, alsoStorylineIds, characterIds, locationId,
-  reveals, requires, constraint a/b, beforeSceneId) resolves; `alsoStorylineIds` has no
-  duplicates and never contains the scene's own storylineId; every storyline
-  `paletteIndex` an integer 0–9; `chronOrder`/`msOrder` satisfy §4.3
-  invariants; anchors match `YYYY-MM-DD` / `HH:MM`; `durationMin`/`offsetMin` are
-  positive integers via `Number.isInteger`; every user-text field is a string.
+  reveals, requires, constraint a/b, beforeSceneId) resolves; `alsoStorylineIds` AND
+  `characterIds` have no duplicates, and `alsoStorylineIds` never contains the scene's
+  own storylineId; every storyline `paletteIndex` an integer 0–9; `chronOrder`/`msOrder`
+  satisfy §4.3 invariants; anchors match `YYYY-MM-DD` / `HH:MM`; `durationMin`/`offsetMin`
+  are positive integers via `Number.isInteger`; every user-text field is a string;
+  `viewPrefs`, if present, is type-checked field-by-field (`mode`/`axis`/`panelTab`
+  against their enum of valid values, `threadCharId` string-or-null, `chronHeightPx`/
+  `pxPerScene` numbers, `panelOpen` boolean) before `sanitizeImportedProject` merges it
+  over the trusted defaults — added in the July 2026 audit pass after finding it was the
+  one top-level field with no validation at all, letting malformed imported data reach
+  the editor's view-mode/axis/panel logic unchecked.
   ("Every user-text field" means every one — an early implementation only checked
   scene title/summary and marker/divider labels; storyline/character/location/reveal
   names had no type check at all. Fixed in the M10 audit. If you're implementing this
   rule fresh, enumerate every user-text field explicitly rather than trusting an
   earlier pass caught them all.)
 - Repairable oddities (unknown extra fields) are dropped silently.
+
+> **Known gap (found in audit, July 2026), not yet fixed:** `createdAt`/`modifiedAt`
+> are required to be present but not type-checked as ISO date strings, `name` may
+> validate as an empty string, and the anchor regexes (`YYYY-MM-DD` / `HH:MM`) accept
+> calendrically impossible values like `2020-13-45` or `99:99` — these fail silently
+> later via `Date.parse` returning `NaN` (`anchorTs()` in `time.js` treats the scene as
+> unanchored) rather than being rejected at import time with a clear error.
 
 If `projectUid` matches an existing project: compare `revision` and offer
 **Update local copy / Keep both / Cancel** (Keep Both assigns a fresh uid). Warn before

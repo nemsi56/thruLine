@@ -170,14 +170,12 @@
       }
       if (document.getElementById('markerPopover') || document.getElementById('markerContextMenu')) {
         if (typeof closeMarkerPopover === 'function') closeMarkerPopover();
-        var ctxMenu = document.getElementById('markerContextMenu');
-        if (ctxMenu) ctxMenu.remove();
+        if (typeof closeMarkerContextMenu === 'function') closeMarkerContextMenu();
         return;
       }
       if (document.getElementById('dividerPopover') || document.getElementById('dividerContextMenu')) {
         if (typeof closeDividerPopover === 'function') closeDividerPopover();
-        var dCtxMenu = document.getElementById('dividerContextMenu');
-        if (dCtxMenu) dCtxMenu.remove();
+        if (typeof closeDividerContextMenu === 'function') closeDividerContextMenu();
         return;
       }
       // §12.7: Escape clears flag mode (same priority tier as closing a popover/modal).

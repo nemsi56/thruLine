@@ -229,7 +229,7 @@ a { color: var(--thread); }
 .convMore { font-size: 8px; color: var(--faint); }
 
 /* hover / selection states (§10.1, §10.2) */
-body.hovering .scene:not(.hi), body.hovering .msCard:not(.hi) { opacity: .28; }
+body.hovering .scene:not(.hi):not(.flag), body.hovering .msCard:not(.hi):not(.flag) { opacity: .28; }
 .scene.hi, .msCard.hi {
   box-shadow: 0 0 0 1px var(--c), 0 6px 18px rgba(0, 0, 0, .5); border-color: var(--c); opacity: 1;
 }

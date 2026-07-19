@@ -81,6 +81,8 @@ function _chronDragBegin(e) {
   var d = _chronDrag;
   d.active = true;
   setDragActive(true); // §5.3: undo must not fire mid-drag
+  clearHighlight(); // the mouseleave fired by the drag itself is swallowed by highlightScene()'s
+                     // _dragActive guard, so hover state must be cleared explicitly here instead
 
   var track = document.getElementById('track');
   var srcEl = track.querySelector('.scene[data-scene-id="' + d.sceneId + '"]');
@@ -603,9 +605,18 @@ function closeMarkerPopover() {
   document.removeEventListener('click', _markerPopoverOutsideClick);
 }
 
+function closeMarkerContextMenu() {
+  var menu = document.getElementById('markerContextMenu');
+  if (menu) menu.remove();
+  document.removeEventListener('click', _contextMenuOutsideClick);
+}
+
 function chronTrackContextMenu(e) {
   e.preventDefault();
   closeMarkerPopover();
+  closeMarkerContextMenu(); // a prior menu left open (e.g. right-click, right-click again) must
+                             // not accumulate — both the stale DOM node and its outside-click
+                             // listener need to go before a new one is created
   var track = document.getElementById('track');
   var rect = track.getBoundingClientRect();
   var clickX = ((e.clientX - rect.left) / rect.width) * 100;
@@ -627,7 +638,7 @@ function chronTrackContextMenu(e) {
     commit('Add marker', function (proj) {
       proj.markers.push({ id: newId('mk_'), label: 'New marker', beforeSceneId: beforeSceneId });
     });
-    menu.remove();
+    closeMarkerContextMenu();
   });
   menu.appendChild(addBtn);
   document.body.appendChild(menu);
