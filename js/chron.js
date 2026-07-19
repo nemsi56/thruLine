@@ -412,39 +412,15 @@ function renderChron() {
    it out of this file — chron.js and manuscript.js both call highlightScene() directly. */
 
 /* ---------------- selection (§10.2) ----------------
-   Full field editing is M6; for now selecting just shows the title in the Inspector
-   with a note that full editing arrives later. */
+   renderInspectorSelection(sceneId) is defined in inspector.js (M6): the scene-editing
+   form when a scene is selected, or the project-level lists when sceneId is null. */
 
-function selectScene(sceneId) {
+function selectScene(sceneId, opts) {
   _chronSelectedSceneId = sceneId;
   document.querySelectorAll('.scene, .msCard').forEach(function (el) {
     el.classList.toggle('sel', el.dataset.sceneId === sceneId);
   });
-  renderInspectorSelection(sceneId);
-}
-
-function renderInspectorSelection(sceneId) {
-  var body = document.getElementById('panelBody');
-  if (!body) return;
-  if (!sceneId || !P) {
-    body.textContent = '';
-    var empty = document.createElement('div');
-    empty.className = 'panelEmpty';
-    empty.textContent = 'Select a scene to edit it here. Project-level lists and the conflict engine arrive in later milestones.';
-    body.appendChild(empty);
-    return;
-  }
-  var s = P.scenes.find(function (x) { return x.id === sceneId; });
-  if (!s) return;
-  body.textContent = '';
-  var h = document.createElement('div');
-  h.className = 'inspectorSceneTitle';
-  h.textContent = s.title;
-  var note = document.createElement('div');
-  note.className = 'panelEmpty';
-  note.textContent = 'Full editing arrives in a later milestone.';
-  body.appendChild(h);
-  body.appendChild(note);
+  if (typeof renderInspectorSelection === 'function') renderInspectorSelection(sceneId, opts);
 }
 
 /* Escape / empty-space deselect wiring lives in editor-init.js which calls selectScene(null). */

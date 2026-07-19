@@ -325,3 +325,88 @@ body.flagging .scene:not(.flag), body.flagging .msCard:not(.flag) { opacity: .25
   color: var(--faint); white-space: nowrap; cursor: pointer; font-weight: 700;
 }
 .msDividerLabel:hover { color: var(--tx); }
+
+/* ==================================================================
+   Inspector (M6) — scene form + project-level lists (§11)
+   ================================================================== */
+
+.sectionHeader { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.sectionHeader .sectionLabel { margin-bottom: 0; }
+.addSceneBtn { padding: 3px 10px; font-size: 11px; }
+
+.btn.small { padding: 3px 8px; font-size: 11px; }
+.iconbtn.small { width: 22px; height: 22px; font-size: 11px; padding: 0; }
+
+.inspField { margin-bottom: 12px; }
+.inspLabel {
+  display: block; font-size: 10.5px; letter-spacing: .6px; color: var(--faint);
+  font-weight: 700; text-transform: uppercase; margin-bottom: 5px;
+}
+.inspField input[type="text"], .inspField input[type="number"], .inspField input[type="date"],
+.inspField input[type="time"], .inspField select, .inspTextarea,
+.whenGroup input, .whenGroup select, .constraintAddRow select, .constraintAddRow input,
+.revealCombo input, .projListRow input {
+  width: 100%; background: var(--panel2); border: 1px solid var(--line); border-radius: 6px;
+  padding: 6px 8px; color: var(--tx); font-size: 12.5px;
+}
+.inspTitleInput { font-weight: 600; }
+.inspTitleInput.shakeField { animation: shake .3s; border-color: var(--red); }
+.inspTextarea { resize: vertical; min-height: 54px; }
+
+.inspRow { display: flex; gap: 8px; margin-bottom: 10px; }
+.inspRow .inspField { flex: 1; margin-bottom: 0; }
+
+.checkList { display: flex; flex-direction: column; gap: 4px; max-height: 160px; overflow-y: auto; }
+.checkRow { display: flex; align-items: center; gap: 6px; font-size: 12.5px; cursor: pointer; }
+.checkRow .sw { width: 14px; height: 3px; border-radius: 2px; flex: 0 0 auto; }
+.checkRow input[type="checkbox"] { flex: 0 0 auto; }
+
+.toggleRow { display: flex; align-items: center; gap: 8px; font-size: 12.5px; cursor: pointer; }
+.toggleRow input { flex: 0 0 auto; }
+
+.inlineAddRow { display: flex; gap: 6px; margin-top: 6px; }
+.inlineAddRow input { flex: 1; background: var(--panel2); border: 1px solid var(--line); border-radius: 6px; padding: 5px 8px; color: var(--tx); font-size: 12px; }
+
+.whenGroup { margin-bottom: 14px; }
+.positionText { font-size: 11px; color: var(--mut); margin-top: 6px; }
+
+.constraintsGroup, .chipGroup, .projListGroup { margin-bottom: 14px; }
+.constraintList { display: flex; flex-direction: column; gap: 4px; margin-bottom: 6px; }
+.constraintRow {
+  display: flex; align-items: center; justify-content: space-between; gap: 6px;
+  background: var(--panel2); border: 1px solid var(--line); border-radius: 6px;
+  padding: 5px 8px; font-size: 12px;
+}
+.constraintAddRow { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; align-items: center; }
+.constraintAddRow select, .constraintAddRow input { width: auto; flex: 1 1 90px; min-width: 70px; }
+.offsetVal { max-width: 60px; flex: 0 0 60px !important; }
+
+.chipList { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 6px; }
+.chip.revealChip {
+  display: inline-flex; align-items: center; gap: 6px; background: var(--panel2);
+  border: 1px solid var(--line); border-radius: 999px; padding: 3px 6px 3px 10px; font-size: 11.5px; cursor: default;
+}
+.chipX {
+  background: transparent; border: 0; color: var(--faint); cursor: pointer; font-size: 11px;
+  line-height: 1; padding: 2px 4px; border-radius: 4px;
+}
+.chipX:hover { color: var(--red); background: var(--panel); }
+
+.revealCombo { position: relative; }
+.revealDropdown {
+  position: absolute; top: calc(100% + 2px); left: 0; right: 0; z-index: 20;
+  background: var(--panel); border: 1px solid var(--line); border-radius: 6px;
+  display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 6px 18px rgba(0, 0, 0, .35);
+}
+.revealDropdownItem {
+  background: transparent; border: 0; color: var(--tx); text-align: left; padding: 6px 9px;
+  font-size: 12px; cursor: pointer;
+}
+.revealDropdownItem:hover { background: var(--panel2); }
+
+.dangerRow { display: flex; gap: 8px; margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--line); }
+.dangerRow .btn { flex: 1; }
+
+.projList { display: flex; flex-direction: column; gap: 5px; margin-bottom: 6px; }
+.projListRow { display: flex; align-items: center; gap: 6px; }
+.projListRow input { flex: 1; }

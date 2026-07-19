@@ -48,7 +48,10 @@
       <svg id="wires"></svg>
 
       <div id="chronSection" class="viewMode active" data-view="chron side">
-        <div class="sectionLabel">CHRONOLOGY — when it happens</div>
+        <div class="sectionHeader">
+          <div class="sectionLabel">CHRONOLOGY — when it happens</div>
+          <button class="btn addSceneBtn" id="addSceneChron">+ Scene</button>
+        </div>
         <div id="chronBody">
           <div id="laneLabels"></div>
           <div id="track"></div>
@@ -60,7 +63,10 @@
       <div id="wiresZone" class="viewMode active" data-view="side"></div>
 
       <div id="manuscriptSection" class="viewMode active" data-view="ms side">
-        <div class="sectionLabel">MANUSCRIPT — what the reader gets, in order</div>
+        <div class="sectionHeader">
+          <div class="sectionLabel">MANUSCRIPT — what the reader gets, in order</div>
+          <button class="btn addSceneBtn" id="addSceneMs">+ Scene</button>
+        </div>
         <div id="msRow"></div>
       </div>
 
@@ -95,6 +101,7 @@
 <script src="js/chron.js"></script>
 <script src="js/manuscript.js"></script>
 <script src="js/wires.js"></script>
+<script src="js/inspector.js"></script>
 <script src="js/editor.js"></script>
 <script src="js/editor-init.js"></script>
 </body>

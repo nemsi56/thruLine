@@ -82,6 +82,14 @@
   document.getElementById('overflowMenu').addEventListener('click', function (e) {
     if (e.target.id === 'overflowMenu') document.getElementById('overflowMenu').hidden = true;
   });
+  // "+ Scene" (§10.4) — same action wired from both section headers.
+  if (typeof addSceneAndFocus === 'function') {
+    var addChronBtn = document.getElementById('addSceneChron');
+    var addMsBtn = document.getElementById('addSceneMs');
+    if (addChronBtn) addChronBtn.addEventListener('click', addSceneAndFocus);
+    if (addMsBtn) addMsBtn.addEventListener('click', addSceneAndFocus);
+  }
+
   document.getElementById('menuExport').addEventListener('click', exportCurrentProject);
   document.getElementById('menuImport').addEventListener('click', function () {
     var input = document.createElement('input');

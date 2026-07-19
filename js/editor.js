@@ -21,6 +21,14 @@ function refreshAll() {
   refreshThreadPicker();
   if (typeof renderChron === 'function') renderChron();
   if (typeof renderManuscript === 'function') renderManuscript();
+  // Re-render the inspector for whatever is currently selected (§5.2: saveProject()'s
+  // refreshAll() re-renders "both views, wires, conflicts, inspector") — every field
+  // edit funnels through commit()->saveProject()->refreshAll(), so without this the
+  // panel would go stale after its own edits (e.g. a new chip/constraint added but
+  // never redrawn).
+  if (typeof renderInspectorSelection === 'function') {
+    renderInspectorSelection(typeof _chronSelectedSceneId !== 'undefined' ? _chronSelectedSceneId : null);
+  }
   // wires read card positions via getBoundingClientRect, so it must render last.
   if (typeof redrawWires === 'function') redrawWires();
 }

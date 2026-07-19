@@ -149,18 +149,24 @@ function enforceInvariants(P) {
 /* ---------------- mutation helpers used by later milestones ---------------- */
 
 function deleteScene(P, sceneId) {
+  // Capture each order's ORIGINAL index of sceneId before it's filtered out below —
+  // once removed, indexOf(sceneId) can never find it (always -1), and since the
+  // array has shifted, that same original index now points at the next scene in
+  // that order, which is exactly the re-anchor target (spec §4.3: "re-anchor to the
+  // next scene in that order, or null = end").
+  var chronIdx = P.chronOrder.indexOf(sceneId);
+  var msIdx = P.msOrder.indexOf(sceneId);
+
   P.scenes = P.scenes.filter(function (s) { return s.id !== sceneId; });
   P.chronOrder = P.chronOrder.filter(function (id) { return id !== sceneId; });
   P.msOrder = P.msOrder.filter(function (id) { return id !== sceneId; });
   P.constraints = P.constraints.filter(function (c) { return c.a !== sceneId && c.b !== sceneId; });
   ['markers', 'dividers'].forEach(function (key) {
+    var order = key === 'markers' ? P.chronOrder : P.msOrder;
+    var idx = key === 'markers' ? chronIdx : msIdx;
     P[key].forEach(function (m) {
       if (m.beforeSceneId === sceneId) {
-        var order = key === 'markers' ? P.chronOrder : P.msOrder;
-        var idx = order.indexOf(sceneId);
-        // re-anchor to next scene in that order, or null
-        var remaining = order; // sceneId already removed above for msOrder/chronOrder
-        m.beforeSceneId = remaining[idx] || null;
+        m.beforeSceneId = (idx !== -1 && order[idx] !== undefined) ? order[idx] : null;
       }
     });
   });

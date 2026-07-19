@@ -534,6 +534,12 @@ edit):
 With no selection, the panel shows project-level lists: storylines (add/rename/delete,
 drag to reorder lanes), characters, locations, reveals (add/rename/delete each).
 
+> **Implementation note (M6):** storyline reordering shipped as up/down buttons rather
+> than drag — deliberately, to avoid bolting a second independently-scoped drag system
+> onto the milestone that also built every other Inspector field and all the delete
+> cascades. Same persisted outcome (lane order), lower risk. Revisit only if the button
+> UX proves unpleasant in practice; not a gap to "fix" by default.
+
 ## 12. Conflict engine (`conflicts.js`)
 
 Pure function `computeConflicts(P)` → array of
