@@ -843,4 +843,6 @@ board order to both orders, sections→dividers, characters/locations→same;
 ThruLine→SceneSetter maps msOrder→board order, dividers→sections; lossless
 round-tripping additionally requires SceneSetter to preserve a namespaced
 `x_thruline` blob through its own import/export — a future SceneSetter-side change.
-Do not implement any of this now, but do not make schema choices that would block it).
+Do not implement any of this now, but do not make schema choices that would block it.
+Full design — including the alternative of folding ThruLine into SceneSetter as a
+feature instead — now lives in `INTERCHANGE_AND_INTEGRATION.md`, July 2026).
