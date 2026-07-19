@@ -102,8 +102,16 @@
     if (overflowOpen && e.code === 'Escape') { document.getElementById('overflowMenu').hidden = true; return; }
     if (overflowOpen) return;
 
-    // Escape priority (§10.3): cancel drag (M5) -> close popover/modal -> clear selection.
+    // Escape priority (§10.3): cancel drag -> close popover/modal -> clear selection.
+    // Drag-cancel is checked FIRST, ahead of the marker/divider popover branches below.
     if (e.code === 'Escape') {
+      var chronDragging = typeof isChronDragActive === 'function' && isChronDragActive();
+      var msDragging = typeof isMsDragActive === 'function' && isMsDragActive();
+      if (chronDragging || msDragging) {
+        if (chronDragging && typeof cancelChronDrag === 'function') cancelChronDrag();
+        if (msDragging && typeof cancelMsDrag === 'function') cancelMsDrag();
+        return;
+      }
       if (document.getElementById('markerPopover') || document.getElementById('markerContextMenu')) {
         if (typeof closeMarkerPopover === 'function') closeMarkerPopover();
         var ctxMenu = document.getElementById('markerContextMenu');

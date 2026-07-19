@@ -1,9 +1,22 @@
 // chron.js — chronology view rendering (M3: ordinal lanes/cards/markers/selection/hover)
-// Drag (M5) and true-scale gap compression (M7) are not implemented here.
+// M5 adds drag (reorder + re-lane); true-scale gap compression (M7) is not implemented here.
 'use strict';
 
 var _chronSelectedSceneId = null;
 var _chronMarkerPopoverId = null;
+
+/* ---------------- drag (§7.5) ----------------
+   _chronDrag is null when no drag is in progress. It goes through two phases:
+   "candidate" (mousedown happened, active:false) while under the 4px threshold, then
+   "active" (ghost/insertion-line visible) once the threshold is crossed. Global
+   mousemove/mouseup listeners are wired ONCE in initChronTrackListeners() (called once
+   from editor-init.js) rather than per-card, mirroring editor.js's divider-drag pattern
+   including its e.buttons===0 self-heal check. */
+var _chronDrag = null;
+var _chronDragOccurred = false; // set true after an active drag ends, so the card's
+                                 // subsequent click event (which always fires after
+                                 // mouseup) doesn't also select the scene.
+var _chronTrueScaleToastShown = false;
 
 /* Track width computation stays isolated here so M7's zoom/scroll can replace it later
    without touching the rest of the renderer. For M3 the track just fills its container. */
@@ -17,9 +30,228 @@ function initChronTrackListeners() {
   var track = document.getElementById('track');
   if (!track) return;
   track.addEventListener('click', function (e) {
+    if (_chronDragOccurred) { _chronDragOccurred = false; return; } // drag dropped on empty track space
     if (e.target === track) selectScene(null);
   });
   track.addEventListener('contextmenu', chronTrackContextMenu);
+
+  // Global drag listeners — wired once here, not per-card/per-render (§7.5).
+  window.addEventListener('mousemove', function (e) {
+    if (!_chronDrag) return;
+    // Self-heal (§7.5, §16.4): mirrors editor.js's divider-drag e.buttons===0 check,
+    // at the top of the handler, before anything else runs.
+    if (e.buttons === 0) { _chronDragCancel(); return; }
+    if (!_chronDrag.active) {
+      var dx = e.clientX - _chronDrag.startX, dy = e.clientY - _chronDrag.startY;
+      if (Math.hypot(dx, dy) < 4) return; // still under the click/drag threshold
+      _chronDragBegin(e);
+    }
+    _chronDragMove(e);
+  });
+  window.addEventListener('mouseup', function () {
+    if (!_chronDrag) return;
+    if (!_chronDrag.active) { _chronDrag = null; return; } // never crossed threshold: plain click
+    _chronDragFinish();
+  });
+}
+
+/* isChronDragActive()/cancelChronDrag() are called from editor-init.js's Escape
+   handler, at the HIGHEST priority per §10.3 ("cancel drag -> close popover/modal ->
+   clear selection") — checked before the marker-popover / divider-popover branches
+   that already exist there. */
+function isChronDragActive() {
+  return !!(_chronDrag && _chronDrag.active);
+}
+
+function cancelChronDrag() {
+  if (_chronDrag) _chronDragCancel();
+}
+
+function _chronDragBegin(e) {
+  var d = _chronDrag;
+  d.active = true;
+  setDragActive(true); // §5.3: undo must not fire mid-drag
+
+  var track = document.getElementById('track');
+  var srcEl = track.querySelector('.scene[data-scene-id="' + d.sceneId + '"]');
+  if (srcEl) srcEl.classList.add('dragSource');
+
+  var scene = P.scenes.find(function (x) { return x.id === d.sceneId; });
+  if (!scene) { _chronDragCancel(); return; }
+
+  var fullChron = P.viewPrefs.mode === 'chron';
+  var cardW = fullChron ? 140 : 96;
+  var storylineById = {};
+  P.storylines.forEach(function (st) { storylineById[st.id] = st; });
+  var st = storylineById[scene.storylineId];
+
+  var ghost = document.createElement('div');
+  ghost.className = 'scene chronGhost';
+  ghost.style.width = cardW + 'px';
+  ghost.style.setProperty('--c', st ? slColor(st.paletteIndex) : 'var(--faint)');
+  var t = document.createElement('div');
+  t.className = 't';
+  t.textContent = scene.title;
+  ghost.appendChild(t);
+  track.appendChild(ghost);
+  d.ghostEl = ghost;
+
+  var line = document.createElement('div');
+  line.className = 'chronInsertLine';
+  line.style.display = 'none';
+  track.appendChild(line);
+  d.insertLineEl = line;
+
+  // Horizontal reorder is ordinal-mode only (§7.5) — true-scale still allows the
+  // vertical lane move, but shows a one-time toast and a plain cursor.
+  if (P.viewPrefs.axis === 'true') {
+    document.body.style.cursor = 'default';
+    _chronShowTrueScaleToast();
+  }
+}
+
+function _chronShowTrueScaleToast() {
+  if (_chronTrueScaleToastShown) return;
+  _chronTrueScaleToastShown = true;
+  var t = document.createElement('div');
+  t.className = 'dragToast';
+  t.textContent = 'Switch to Ordinal to reorder by drag';
+  document.body.appendChild(t);
+  setTimeout(function () { t.remove(); }, 2200);
+}
+
+/* Find the scene nearest to the right of the cursor ACROSS ALL LANES by x (§7.5) —
+   the drop slot is a position in chronOrder, not per-lane. Reads actual card rects
+   (not the xMap) so it works correctly regardless of the known ordinal-overlap issue
+   (§6.1) — overlapping cards still have real, distinct DOM positions. */
+function _chronFindDropBeforeId(localX, excludeId) {
+  var track = document.getElementById('track');
+  var trackRect = track.getBoundingClientRect();
+  // .chronGhost also carries the base 'scene' class (for matching card styling), so it
+  // must be excluded here explicitly — otherwise it's picked up as a "card" candidate,
+  // and since it tracks the cursor exactly it's almost always the nearest match, with
+  // no dataset.sceneId of its own, silently corrupting every drop into a no-op.
+  var cards = Array.prototype.slice.call(track.querySelectorAll('.scene:not(.chronGhost)'));
+  var best = null, bestX = Infinity;
+  cards.forEach(function (el) {
+    var id = el.dataset.sceneId;
+    if (!id || id === excludeId) return;
+    var r = el.getBoundingClientRect();
+    var cx = r.left + r.width / 2 - trackRect.left;
+    if (cx >= localX && cx < bestX) { bestX = cx; best = id; }
+  });
+  return best; // null = insert at the end of chronOrder
+}
+
+function _chronInsertionX(track, trackRect, beforeId, excludeId) {
+  if (beforeId) {
+    var el = track.querySelector('.scene[data-scene-id="' + beforeId + '"]');
+    if (el) { var r = el.getBoundingClientRect(); return r.left - trackRect.left - 4; }
+  }
+  var cards = Array.prototype.slice.call(track.querySelectorAll('.scene'));
+  var maxRight = 0;
+  cards.forEach(function (el) {
+    if (el.dataset.sceneId === excludeId) return;
+    var r = el.getBoundingClientRect();
+    var rx = r.right - trackRect.left;
+    if (rx > maxRight) maxRight = rx;
+  });
+  return maxRight + 4;
+}
+
+function _chronLaneAtClientY(clientY) {
+  var rows = Array.prototype.slice.call(document.querySelectorAll('.laneRow'));
+  if (!rows.length) return null;
+  for (var i = 0; i < rows.length; i++) {
+    var r = rows[i].getBoundingClientRect();
+    if (clientY >= r.top && clientY <= r.bottom) return rows[i].dataset.storylineId;
+  }
+  var firstR = rows[0].getBoundingClientRect();
+  if (clientY < firstR.top) return rows[0].dataset.storylineId;
+  return rows[rows.length - 1].dataset.storylineId;
+}
+
+function _chronDragMove(e) {
+  var d = _chronDrag;
+  var track = document.getElementById('track');
+  var trackRect = track.getBoundingClientRect();
+  var localX = e.clientX - trackRect.left;
+  var localY = e.clientY - trackRect.top;
+
+  d.ghostEl.style.left = localX + 'px';
+  d.ghostEl.style.top = localY + 'px';
+
+  if (P.viewPrefs.axis !== 'true') {
+    var beforeId = _chronFindDropBeforeId(localX, d.sceneId);
+    d.targetBeforeId = beforeId;
+    d.insertLineEl.style.left = _chronInsertionX(track, trackRect, beforeId, d.sceneId) + 'px';
+    d.insertLineEl.style.display = '';
+  } else {
+    d.targetBeforeId = undefined; // not computed: true-scale reorder is disabled
+    d.insertLineEl.style.display = 'none';
+  }
+
+  var laneStId = _chronLaneAtClientY(e.clientY);
+  d.targetStorylineId = laneStId;
+  document.querySelectorAll('.laneRow').forEach(function (row) {
+    row.classList.toggle('dropTarget', row.dataset.storylineId === laneStId);
+  });
+}
+
+function _chronDragCleanupVisual() {
+  if (_chronDrag) {
+    if (_chronDrag.ghostEl) _chronDrag.ghostEl.remove();
+    if (_chronDrag.insertLineEl) _chronDrag.insertLineEl.remove();
+    var srcEl = document.querySelector('.scene[data-scene-id="' + _chronDrag.sceneId + '"]');
+    if (srcEl) srcEl.classList.remove('dragSource');
+  }
+  document.querySelectorAll('.laneRow.dropTarget').forEach(function (r) { r.classList.remove('dropTarget'); });
+  document.body.style.cursor = '';
+}
+
+function _chronDragCancel() {
+  _chronDragCleanupVisual();
+  setDragActive(false);
+  _chronDrag = null;
+}
+
+function _chronDragFinish() {
+  var d = _chronDrag;
+  _chronDragCleanupVisual();
+  setDragActive(false);
+  _chronDrag = null;
+  _chronDragOccurred = true; // suppress the click that follows this mouseup
+
+  var scene = P.scenes.find(function (x) { return x.id === d.sceneId; });
+  if (!scene) return;
+
+  var newChronOrder = null;
+  if (P.viewPrefs.axis !== 'true' && d.targetBeforeId !== undefined) {
+    var without = P.chronOrder.filter(function (id) { return id !== d.sceneId; });
+    var idx = d.targetBeforeId ? without.indexOf(d.targetBeforeId) : -1;
+    if (idx === -1) idx = without.length;
+    var candidate = without.slice();
+    candidate.splice(idx, 0, d.sceneId);
+    var same = candidate.length === P.chronOrder.length &&
+      candidate.every(function (id, i) { return id === P.chronOrder[i]; });
+    if (!same) newChronOrder = candidate;
+  }
+
+  var relane = !!(d.targetStorylineId && d.targetStorylineId !== scene.storylineId);
+
+  if (!newChronOrder && !relane) return; // no-op drag: nothing moved, no commit
+
+  var label = newChronOrder ? 'Move scene (time)' : 'Move scene (lane)';
+
+  // commit() -> saveProject() -> refreshAll() already re-renders chron/manuscript and
+  // calls redrawWires() last (see editor.js) — no separate redraw call needed here.
+  commit(label, function (proj) {
+    if (newChronOrder) proj.chronOrder = newChronOrder;
+    if (relane) {
+      var s = proj.scenes.find(function (x) { return x.id === d.sceneId; });
+      if (s) s.storylineId = d.targetStorylineId;
+    }
+  });
 }
 
 function renderChron() {
@@ -154,7 +386,18 @@ function renderChron() {
 
     card.addEventListener('mouseenter', function () { highlightScene(s.id, true); });
     card.addEventListener('mouseleave', function () { highlightScene(s.id, false); });
-    card.addEventListener('click', function (e) { e.stopPropagation(); selectScene(s.id); });
+    card.addEventListener('click', function (e) {
+      e.stopPropagation();
+      if (_chronDragOccurred) { _chronDragOccurred = false; return; } // a drag just ended here
+      selectScene(s.id);
+    });
+    card.addEventListener('mousedown', function (e) {
+      if (e.button !== 0) return;
+      _chronDrag = {
+        sceneId: s.id, active: false, startX: e.clientX, startY: e.clientY,
+        ghostEl: null, insertLineEl: null, targetBeforeId: undefined, targetStorylineId: null
+      };
+    });
 
     track.appendChild(card);
   });

@@ -248,6 +248,48 @@ body.flagging .scene:not(.flag), body.flagging .msCard:not(.flag) { opacity: .25
 .inspectorSceneTitle { font-size: 14px; font-weight: 600; margin-bottom: 8px; }
 
 /* ==================================================================
+   Drag (M5) — chronology: reorder + re-lane (§7.5)
+   ================================================================== */
+
+.scene.dragSource { opacity: .35; }
+
+.chronGhost {
+  position: absolute; z-index: 50; pointer-events: none; opacity: .85;
+  transform: translate(-50%, -50%); cursor: grabbing;
+}
+
+.chronInsertLine {
+  position: absolute; top: 0; bottom: 0; width: 2px; background: var(--thread);
+  z-index: 3; pointer-events: none; opacity: .9; border-radius: 1px;
+}
+
+.laneRow.dropTarget { outline: 2px dashed var(--thread); outline-offset: -2px; }
+
+/* ==================================================================
+   Drag (M5) — manuscript: reorder within msOrder (§8.3)
+   ================================================================== */
+
+.msCard.dragSource { opacity: .35; }
+
+.msGhost {
+  position: fixed; z-index: 300; pointer-events: none; opacity: .9;
+  transform: translate(-50%, -50%); cursor: grabbing;
+}
+
+.msInsertLine {
+  position: fixed; width: 2px; background: var(--thread); z-index: 300;
+  pointer-events: none; opacity: .9; border-radius: 1px;
+}
+
+/* one-time "switch to Ordinal" toast (§7.5) */
+.dragToast {
+  position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%);
+  background: var(--panel); border: 1px solid var(--line); color: var(--tx);
+  padding: 8px 14px; border-radius: 8px; font-size: 12px; z-index: 400;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, .35);
+}
+
+/* ==================================================================
    Manuscript view (M4) — card strip + dividers
    ================================================================== */
 

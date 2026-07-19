@@ -1,17 +1,172 @@
 // manuscript.js — manuscript view rendering (M4: cards, dividers, cross-view hover/select)
-// Drag (M5) is not implemented here.
+// M5 adds drag: horizontal reorder of msOrder only (chronOrder untouched).
 'use strict';
 
 var _msDividerPopoverId = null;
+
+/* ---------------- drag (§8.3) ----------------
+   Same two-phase (candidate -> active) pattern as chron.js's _chronDrag, same
+   threshold/self-heal/Escape rules (§7.5, reused for §8.3). msRow has no explicit
+   `position:relative` in styles.css, so the ghost card and insertion line use
+   `position:fixed` in viewport coordinates instead of track-relative coordinates. */
+var _msDrag = null;
+var _msDragOccurred = false;
 
 /* Wired once — #msRow is a persistent DOM node reused across renderManuscript() calls. */
 function initManuscriptRowListeners() {
   var row = document.getElementById('msRow');
   if (!row) return;
   row.addEventListener('click', function (e) {
+    if (_msDragOccurred) { _msDragOccurred = false; return; } // drag dropped on empty row space
     if (e.target === row) selectScene(null);
   });
   row.addEventListener('contextmenu', manuscriptRowContextMenu);
+
+  window.addEventListener('mousemove', function (e) {
+    if (!_msDrag) return;
+    if (e.buttons === 0) { _msDragCancel(); return; } // self-heal (§7.5/§8.3, §16.4)
+    if (!_msDrag.active) {
+      var dx = e.clientX - _msDrag.startX, dy = e.clientY - _msDrag.startY;
+      if (Math.hypot(dx, dy) < 4) return;
+      _msDragBegin(e);
+    }
+    _msDragMove(e);
+  });
+  window.addEventListener('mouseup', function () {
+    if (!_msDrag) return;
+    if (!_msDrag.active) { _msDrag = null; return; }
+    _msDragFinish();
+  });
+}
+
+/* Called from editor-init.js's Escape handler at the highest priority (§10.3),
+   alongside isChronDragActive()/cancelChronDrag(). */
+function isMsDragActive() {
+  return !!(_msDrag && _msDrag.active);
+}
+
+function cancelMsDrag() {
+  if (_msDrag) _msDragCancel();
+}
+
+function _msDragBegin(e) {
+  var d = _msDrag;
+  d.active = true;
+  setDragActive(true);
+
+  var row = document.getElementById('msRow');
+  var srcEl = row.querySelector('.msCard[data-scene-id="' + d.sceneId + '"]');
+  var width = 140;
+  if (srcEl) { srcEl.classList.add('dragSource'); width = srcEl.getBoundingClientRect().width; }
+
+  var scene = P.scenes.find(function (x) { return x.id === d.sceneId; });
+  if (!scene) { _msDragCancel(); return; }
+
+  var storylineById = {};
+  P.storylines.forEach(function (st) { storylineById[st.id] = st; });
+  var st = storylineById[scene.storylineId];
+
+  var ghost = document.createElement('div');
+  ghost.className = 'msCard msGhost';
+  ghost.style.width = width + 'px';
+  ghost.style.setProperty('--c', st ? slColor(st.paletteIndex) : 'var(--faint)');
+  var t = document.createElement('div');
+  t.className = 't';
+  t.textContent = scene.title;
+  ghost.appendChild(t);
+  document.body.appendChild(ghost);
+  d.ghostEl = ghost;
+
+  var line = document.createElement('div');
+  line.className = 'msInsertLine';
+  document.body.appendChild(line);
+  d.insertLineEl = line;
+}
+
+/* "Insertion line in the gap nearest the cursor" (§8.3), aware of the wrapping-grid
+   row layout: if the cursor is above a card's row, insert before that card (start of
+   its row); if it's within the card's row, use the left/right-of-midpoint test that
+   manuscriptRowContextMenu already uses for "Add divider here" (§8.2), extended with
+   the row check so it degrades gracefully across wraps. */
+function _msFindDropBeforeId(clientX, clientY, excludeId) {
+  var row = document.getElementById('msRow');
+  var cards = Array.prototype.slice.call(row.querySelectorAll('.msCard:not(.msGhost)'));
+  for (var i = 0; i < cards.length; i++) {
+    var id = cards[i].dataset.sceneId;
+    if (id === excludeId) continue;
+    var r = cards[i].getBoundingClientRect();
+    if (clientY < r.top - 2) return id; // cursor is above this card's row entirely
+    if (clientY >= r.top && clientY <= r.bottom && clientX <= r.left + r.width / 2) return id;
+  }
+  return null; // insert at the end of msOrder
+}
+
+function _msInsertionRect(beforeId, excludeId) {
+  var row = document.getElementById('msRow');
+  if (beforeId) {
+    var el = row.querySelector('.msCard[data-scene-id="' + beforeId + '"]');
+    if (el) { var r = el.getBoundingClientRect(); return { x: r.left - 4, top: r.top, bottom: r.bottom }; }
+  }
+  var cards = Array.prototype.slice.call(row.querySelectorAll('.msCard:not(.msGhost)'));
+  var last = null;
+  cards.forEach(function (el) { if (el.dataset.sceneId !== excludeId) last = el; });
+  if (last) { var lr = last.getBoundingClientRect(); return { x: lr.right + 4, top: lr.top, bottom: lr.bottom }; }
+  var rr = row.getBoundingClientRect();
+  return { x: rr.left, top: rr.top, bottom: rr.bottom };
+}
+
+function _msDragMove(e) {
+  var d = _msDrag;
+  d.ghostEl.style.left = e.clientX + 'px';
+  d.ghostEl.style.top = e.clientY + 'px';
+
+  var beforeId = _msFindDropBeforeId(e.clientX, e.clientY, d.sceneId);
+  d.targetBeforeId = beforeId;
+  var ins = _msInsertionRect(beforeId, d.sceneId);
+  d.insertLineEl.style.left = ins.x + 'px';
+  d.insertLineEl.style.top = ins.top + 'px';
+  d.insertLineEl.style.height = (ins.bottom - ins.top) + 'px';
+}
+
+function _msDragCleanupVisual() {
+  if (_msDrag) {
+    if (_msDrag.ghostEl) _msDrag.ghostEl.remove();
+    if (_msDrag.insertLineEl) _msDrag.insertLineEl.remove();
+    var srcEl = document.querySelector('.msCard[data-scene-id="' + _msDrag.sceneId + '"]');
+    if (srcEl) srcEl.classList.remove('dragSource');
+  }
+}
+
+function _msDragCancel() {
+  _msDragCleanupVisual();
+  setDragActive(false);
+  _msDrag = null;
+}
+
+function _msDragFinish() {
+  var d = _msDrag;
+  _msDragCleanupVisual();
+  setDragActive(false);
+  _msDrag = null;
+  _msDragOccurred = true;
+
+  var scene = P.scenes.find(function (x) { return x.id === d.sceneId; });
+  if (!scene) return;
+
+  var without = P.msOrder.filter(function (id) { return id !== d.sceneId; });
+  var idx = d.targetBeforeId ? without.indexOf(d.targetBeforeId) : -1;
+  if (idx === -1) idx = without.length;
+  var candidate = without.slice();
+  candidate.splice(idx, 0, d.sceneId);
+  var same = candidate.length === P.msOrder.length &&
+    candidate.every(function (id, i) { return id === P.msOrder[i]; });
+  if (same) return; // no-op drag: nothing moved, no commit
+
+  // commit() -> saveProject() -> refreshAll() re-renders + redraws wires last; chronOrder
+  // is untouched (§8.3).
+  commit('Move scene (manuscript)', function (proj) {
+    proj.msOrder = candidate;
+  });
 }
 
 function renderManuscript() {
@@ -88,7 +243,18 @@ function buildMsCard(s, index, storylineById, baselineYear) {
 
   card.addEventListener('mouseenter', function () { highlightScene(s.id, true); });
   card.addEventListener('mouseleave', function () { highlightScene(s.id, false); });
-  card.addEventListener('click', function (e) { e.stopPropagation(); selectScene(s.id); });
+  card.addEventListener('click', function (e) {
+    e.stopPropagation();
+    if (_msDragOccurred) { _msDragOccurred = false; return; }
+    selectScene(s.id);
+  });
+  card.addEventListener('mousedown', function (e) {
+    if (e.button !== 0) return;
+    _msDrag = {
+      sceneId: s.id, active: false, startX: e.clientX, startY: e.clientY,
+      ghostEl: null, insertLineEl: null, targetBeforeId: undefined
+    };
+  });
 
   return card;
 }
@@ -179,7 +345,7 @@ function manuscriptRowContextMenu(e) {
   // Find the card nearest to the right of the click point (in flex/DOM order,
   // mirroring chron.js's "nearest scene to the right" rule but by rendered
   // position rather than percentage x since msRow is a normal flex flow).
-  var cards = Array.prototype.slice.call(row.querySelectorAll('.msCard'));
+  var cards = Array.prototype.slice.call(row.querySelectorAll('.msCard:not(.msGhost)'));
   var beforeSceneId = null;
   for (var i = 0; i < cards.length; i++) {
     var r = cards[i].getBoundingClientRect();
