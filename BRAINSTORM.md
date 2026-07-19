@@ -198,96 +198,14 @@ TrackChanges (taken, sadly), Sequence, Reorder, Interleaf. "Throughline" and "Fa
 both gesture at the actual differentiator. If it folds into SceneSetter eventually, it
 becomes "SceneSetter Timeline" and the standalone name matters less.
 
-## 10. Decisions so far (July 18, 2026)
+## 10. Where decisions live now
 
-1. **Time model: full tiered support in v1.** Projects vary — some date-driven, some
-   sequence-only — so all three tiers (order / relative / anchored) ship in v1. A
-   project-level "time style" setting can default the UI (a sequence-only project never
-   shows date pickers unprompted), but the data model supports all tiers everywhere.
-   Fictional calendars remain post-v1.
-2. **Views are equals — side-by-side is the identity of the app.** Neither chronology nor
-   manuscript is "home"; the flagship layout shows both (stacked or split, with the
-   crossing-lines mapping drawn live between them), one keystroke to focus either. This
-   is the strongest version of the dual-order concept and should drive the visual design
-   from day one, not be retrofitted.
-3. **Problem-solver v1 = conflicts + reveal tracking.** Order contradictions, bilocation,
-   and reveals/requires checking against manuscript order — all passive (linter, not
-   gate) with per-warning "intentional" dismissal.
-4. **Stack: static web, SceneSetter-style.** Vanilla JS, localStorage, JSON
-   export/import, static hosting. Same privacy/portability story; easiest eventual
-   fold-in. SVG timeline canvas.
-
-## 11. Decisions round two (July 18, 2026) — design comparison outcome
-
-Three design mockups were built and compared (`mockup_sidebyside.html` = A "mission
-control", `mockup_writers_desk.html` = B "writer's desk", `mockup_braid.html` = C "the
-braid"). Outcomes:
-
-5. **Design A is the primary workspace.** B is not built as a layout; its paper palette
-   becomes the LIGHT THEME (dark + light both ship in v1, same sans typography as A —
-   no serif). C ships as a read-only fourth view mode ("Braid") — cheap, high value.
-6. **Name: ThruLiner** (working) — later renamed to **ThruLine** (see §12). Spec file:
-   `THRULINE_V1_SPEC.md`.
-
-## 12. Decisions round three (July 18, 2026)
-
-12. **Name finalized: ThruLine** (was "ThruLiner"). Renamed throughout: spec file
-    (`THRULINE_V1_SPEC.md`), page titles, export file extension (`.thruline.json`), the
-    planned SceneSetter round-trip blob (`x_thruline`). GitHub repo already matched:
-    `github.com/nemsi56/thruLine`.
-13. **Sample-seeding bug fixed** (found while smoke-testing M1–M2): the "already
-    seeded" flag was set *before* the fetch resolved, so a first-run failure (e.g. the
-    fetch being blocked, as happens under a `file://` origin) locked the app out of ever
-    seeding the sample project again. Fixed with a short-lived timestamped lock —
-    `samplesSeeded` only becomes true on actual success; a stale, failed lock retries
-    on the next load. **Also confirmed the app must be served over `http://`, never
-    opened as a `file://` path** — `file://` blocks the sample-data fetch and shares one
-    undifferentiated localStorage bucket across unrelated local files/apps. A
-    `ThruLine`-named dev server entry was added to `.claude/launch.json` (plus a
-    no-cache variant, `ThruLine-nocache`, since the plain Python server's lack of cache
-    headers was observed to serve stale JS after edits — same tooling quirk documented
-    in SceneSetter's history).
-7. **One card type + "offscreen" flag** (no separate event entity). Audience: novelists
-   first.
-8. **Storyline convergence:** a scene has one HOME storyline (its lane) plus optional
-   secondary storylines rendered as small color dots on the card; character threads
-   also make convergence visible.
-9. **Long timelines scroll, they don't shrink:** per-strip horizontal scrolling with a
-   bounded zoom (70–200 px/scene), wires tracking scroll, and counterpart auto-scroll
-   on selection. A true split-pane over the chronology is a named v1.x follow-up, as is
-   a minimap.
-10. **SceneSetter relationship:** ThruLine ships standalone; two-way interchange is
-    designed but deferred (v1.x). Lossless round-tripping will require SceneSetter to
-    preserve an `x_thruline` blob through its import/export — SG will make that
-    SceneSetter-side change later, when making the apps interactive. Same-origin
-    hosting can eventually let both apps share localStorage ("jump between apps").
-11. **Conflicts stay non-AI:** user-declared reveals/requires + set arithmetic over
-    reading order; all metadata optional, checks activate only when data exists.
-
-## 13. Build progress and a known layout gap (July 18, 2026)
-
-M1–M4 are built and pushed (`github.com/nemsi56/thruLine`, branch `main`): state model,
-projects page, editor shell, chronology view (lanes/cards/markers/selection/hover/
-thread overlay), and manuscript view + cross-view wires + cross-view hover/selection
-linking. Each milestone was built by a Sonnet subagent from the spec, then verified live
-in-browser by Claude directly (the subagent explicitly avoids the shared browser
-session, so this split — cheap delegated build, then a real verification pass — is the
-working pattern for the rest of the milestones too).
-
-**Known gap, deliberately left unfixed for now:** ordinal-mode chronology/manuscript
-cards can visually overlap at ordinary window widths, confirmed via screenshot — see
-`THRULINE_V1_SPEC.md` §6.1's inline note for the root cause (fixed card width vs.
-global-index-based spacing, no collision pass in ordinal mode, no scroll container
-yet). Decision: wait for M7 (scroll + zoom, §7.6) rather than patch ordinal mode now —
-that milestone is the real fix and a separate interim collision pass would be
-throwaway work.
-
-**Bugs found and fixed during verification so far**, for reference: M3's character-
-thread `<svg>` didn't fill its container (CSS `inset:0` doesn't stretch a "replaced
-element" like `<svg>` — needs explicit width/height), fixed and confirmed. M4's wires
-`<svg>` correctly avoided the same mistake (explicit width/height attributes, per
-spec's own §9 instruction). Also confirmed environment-specific: this session's
-browser-automation tool doesn't dispatch real `resize` events or trigger
-`ResizeObserver` at all (verified with a throwaway observer that never fired) — code
-that depends on either can't be live-verified here and should get a real-browser
-spot-check eventually, but isn't assumed broken on that basis alone.
+Everything decided after this point (naming, view architecture, themes, storyline
+convergence, scrolling/zoom approach, the SceneSetter interchange plan, conflict-engine
+scope, and so on) is captured directly in `THRULINE_V1_SPEC.md` — that document is now
+the authoritative, current source, including inline notes for gaps found during
+building (e.g. §6.1 on ordinal-mode card overlap). Build progress and bug history live
+in the git commit log at `github.com/nemsi56/thruLine`. This file intentionally stops
+tracking decisions/status as of here, to avoid duplicating what those two sources
+already do better — see §1–9 above for the durable design rationale, which is this
+file's actual job.
