@@ -166,3 +166,83 @@ a { color: var(--thread); }
 
 .viewMode { display: none; }
 .viewMode.active { display: block; }
+
+/* ==================================================================
+   Chronology view (M3)
+   ================================================================== */
+
+#chronBody { display: flex; }
+#laneLabels { flex: 0 0 128px; padding-top: 26px; }
+.laneLabel {
+  display: flex; flex-direction: column; justify-content: center;
+  font-size: 11px; color: var(--mut); font-weight: 600; padding-right: 12px;
+  border-right: 2px solid var(--line); gap: 2px;
+}
+.laneLabel .sw { width: 18px; height: 3px; border-radius: 2px; }
+.laneLabel .laneName { color: var(--tx); }
+.laneLabel i { font-style: normal; font-size: 10px; color: var(--faint); font-weight: 400; }
+
+#track { position: relative; flex: 1; margin-left: 12px; min-width: 0; }
+.laneRow { position: absolute; left: 0; right: 0; border-bottom: 1px dashed var(--line); }
+
+.scene {
+  position: absolute; z-index: 2; transform: translate(-50%, -50%); cursor: pointer;
+  background: var(--panel); border: 1px solid var(--line); border-radius: 8px;
+  padding: 6px 8px 5px; transition: opacity .15s, box-shadow .15s, border-color .15s;
+  border-top: 3px solid var(--c);
+}
+.scene .t {
+  font-size: 11px; font-weight: 600; line-height: 1.25;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.scene .m {
+  font-size: 9.5px; color: var(--mut); margin-top: 3px; display: flex;
+  justify-content: space-between; gap: 6px;
+}
+.scene .m .ch { color: var(--faint); }
+.scene.offscreen { opacity: .6; border-style: dashed; }
+
+.warnDot {
+  position: absolute; top: -5px; right: -5px; width: 10px; height: 10px; border-radius: 50%;
+  background: var(--red); border: 2px solid var(--bg); display: none;
+}
+.scene.warn .warnDot, .msCard.warn .warnDot { display: block; }
+
+.convDots {
+  position: absolute; bottom: -4px; right: -4px; display: flex; align-items: center; gap: 2px;
+}
+.convDot { width: 6px; height: 6px; border-radius: 50%; border: 1px solid var(--bg); }
+.convMore { font-size: 8px; color: var(--faint); }
+
+/* hover / selection states (§10.1, §10.2) */
+body.hovering .scene:not(.hi), body.hovering .msCard:not(.hi) { opacity: .28; }
+.scene.hi, .msCard.hi {
+  box-shadow: 0 0 0 1px var(--c), 0 6px 18px rgba(0, 0, 0, .5); border-color: var(--c); opacity: 1;
+}
+.scene.sel, .msCard.sel { box-shadow: 0 0 0 1px var(--thread); border-color: var(--thread); }
+.scene.flag, .msCard.flag {
+  box-shadow: 0 0 0 2px var(--red), 0 6px 18px rgba(0, 0, 0, .5); border-color: var(--red); opacity: 1;
+}
+body.flagging .scene:not(.flag), body.flagging .msCard:not(.flag) { opacity: .25; }
+
+/* markers (§7.4) */
+.markerLine {
+  position: absolute; top: 4px; bottom: 0; width: 0; border-left: 1px dashed var(--faint); z-index: 1;
+}
+.markerLabel {
+  position: absolute; top: -16px; left: 4px; font-size: 9px; letter-spacing: 1px; color: var(--faint);
+  white-space: nowrap; cursor: pointer; font-weight: 700;
+}
+.markerLabel:hover { color: var(--tx); }
+
+.markerPopover {
+  position: fixed; z-index: 300; background: var(--panel); border: 1px solid var(--line);
+  border-radius: 8px; padding: 10px; display: flex; flex-direction: column; gap: 8px; width: 200px;
+}
+.markerPopover input[type="text"] {
+  width: 100%; background: var(--panel2); border: 1px solid var(--line); border-radius: 6px;
+  padding: 6px 8px; color: var(--tx);
+}
+.markerPopover .row { display: flex; justify-content: flex-end; }
+
+.inspectorSceneTitle { font-size: 14px; font-weight: 600; margin-bottom: 8px; }

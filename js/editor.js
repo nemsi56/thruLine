@@ -19,6 +19,7 @@ function refreshAll() {
   if (nameEl) nameEl.textContent = P.name;
   applyViewMode(P.viewPrefs.mode);
   refreshThreadPicker();
+  if (typeof renderChron === 'function') renderChron();
 }
 
 function refreshThreadPicker() {

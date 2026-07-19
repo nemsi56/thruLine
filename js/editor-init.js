@@ -20,6 +20,7 @@
   savePrefs(prefs);
 
   initDividerDrag();
+  if (typeof initChronTrackListeners === 'function') initChronTrackListeners();
   refreshAll();
 
   // view switcher
@@ -86,6 +87,18 @@
     var overflowOpen = !document.getElementById('overflowMenu').hidden;
     if (overflowOpen && e.code === 'Escape') { document.getElementById('overflowMenu').hidden = true; return; }
     if (overflowOpen) return;
+
+    // Escape priority (§10.3): cancel drag (M5) -> close popover/modal -> clear selection.
+    if (e.code === 'Escape') {
+      if (document.getElementById('markerPopover') || document.getElementById('markerContextMenu')) {
+        if (typeof closeMarkerPopover === 'function') closeMarkerPopover();
+        var ctxMenu = document.getElementById('markerContextMenu');
+        if (ctxMenu) ctxMenu.remove();
+        return;
+      }
+      if (typeof selectScene === 'function') selectScene(null);
+      return;
+    }
 
     var mod = e.metaKey || e.ctrlKey;
     if (mod && e.code === 'KeyZ' && e.shiftKey) { e.preventDefault(); redo(e); return; }
