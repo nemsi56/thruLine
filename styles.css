@@ -182,8 +182,22 @@ a { color: var(--thread); }
 .laneLabel .laneName { color: var(--tx); }
 .laneLabel i { font-style: normal; font-size: 10px; color: var(--faint); font-weight: 400; }
 
-#track { position: relative; flex: 1; margin-left: 12px; min-width: 0; }
+/* §7.6: horizontal scroll container — #track itself is sized (in px, by JS) to
+   max(container width, N*pxPerScene + padding) and scrolls inside #chronScroll.
+   left:x% on cards is relative to #track's own (explicit) width, which is what we want. */
+#chronScroll { flex: 1; min-width: 0; margin-left: 12px; overflow-x: auto; overflow-y: hidden; }
+#track { position: relative; min-width: 100%; }
 .laneRow { position: absolute; left: 0; right: 0; border-bottom: 1px dashed var(--line); }
+
+/* gap divider (§7.2) — vertical dashed line + small label, purely cosmetic */
+.gapDivider {
+  position: absolute; top: 0; bottom: 0; width: 0; border-left: 1px dashed var(--faint);
+  z-index: 1; pointer-events: none;
+}
+.gapDivider .gapLabel {
+  position: absolute; top: 50%; left: 4px; transform: translateY(-50%);
+  font-size: 9px; letter-spacing: .5px; color: var(--faint); white-space: nowrap; font-weight: 700;
+}
 
 .scene {
   position: absolute; z-index: 2; transform: translate(-50%, -50%); cursor: pointer;
@@ -293,13 +307,18 @@ body.flagging .scene:not(.flag), body.flagging .msCard:not(.flag) { opacity: .25
    Manuscript view (M4) — card strip + dividers
    ================================================================== */
 
-#msRow {
-  display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-start;
+/* §7.6/§8.1: real horizontal scroll container (M7), replacing the M4 flex-wrap
+   stopgap — matches the chronology strip's approach (#chronScroll/#track). */
+#msScroll {
   margin-left: 140px; /* aligns with the chronology track (128px lane-label column + 12px gap) */
+  overflow-x: auto; overflow-y: hidden; position: relative;
+}
+#msRow {
+  display: flex; flex-wrap: nowrap; gap: 8px; align-items: flex-start; min-width: 100%;
 }
 
 .msCard {
-  position: relative; flex: 1 1 110px; min-width: 110px; max-width: 220px;
+  position: relative; flex: 0 0 auto; width: 110px;
   background: var(--panel); border: 1px solid var(--line); border-radius: 8px;
   padding: 6px 8px 6px; cursor: pointer; border-top: 3px solid var(--c);
   transition: opacity .15s, box-shadow .15s, border-color .15s;
@@ -333,6 +352,9 @@ body.flagging .scene:not(.flag), body.flagging .msCard:not(.flag) { opacity: .25
 .sectionHeader { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
 .sectionHeader .sectionLabel { margin-bottom: 0; }
 .addSceneBtn { padding: 3px 10px; font-size: 11px; }
+.headerControls { display: flex; align-items: center; gap: 12px; }
+.zoomCtl { display: flex; align-items: center; gap: 6px; font-size: 10px; letter-spacing: .6px; color: var(--faint); font-weight: 700; text-transform: uppercase; }
+.zoomCtl input[type="range"] { width: 90px; }
 
 .btn.small { padding: 3px 8px; font-size: 11px; }
 .iconbtn.small { width: 22px; height: 22px; font-size: 11px; padding: 0; }

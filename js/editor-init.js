@@ -22,7 +22,24 @@
   initDividerDrag();
   if (typeof initChronTrackListeners === 'function') initChronTrackListeners();
   if (typeof initManuscriptRowListeners === 'function') initManuscriptRowListeners();
+  if (typeof initWireScrollListeners === 'function') initWireScrollListeners();
   refreshAll();
+
+  // zoom slider (§7.6) — pxPerScene, 70-200, persisted in viewPrefs; re-render both
+  // strips (widths + collision pass all depend on it) then redraw wires.
+  var chronZoomEl = document.getElementById('chronZoom');
+  if (chronZoomEl) {
+    chronZoomEl.value = (P.viewPrefs && P.viewPrefs.pxPerScene) || 110;
+    chronZoomEl.addEventListener('input', function () {
+      P.viewPrefs.pxPerScene = parseInt(chronZoomEl.value, 10) || 110;
+      if (typeof renderChron === 'function') renderChron();
+      if (typeof renderManuscript === 'function') renderManuscript();
+      if (typeof redrawWires === 'function') redrawWires();
+    });
+    chronZoomEl.addEventListener('change', function () {
+      saveProject(); // commits the final value to localStorage without a full undo entry
+    });
+  }
 
   // wires read card positions via getBoundingClientRect; a ResizeObserver on the stage
   // catches divider drags / panel collapse that a plain window resize would miss.

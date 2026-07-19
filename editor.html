@@ -50,11 +50,16 @@
       <div id="chronSection" class="viewMode active" data-view="chron side">
         <div class="sectionHeader">
           <div class="sectionLabel">CHRONOLOGY — when it happens</div>
-          <button class="btn addSceneBtn" id="addSceneChron">+ Scene</button>
+          <div class="headerControls">
+            <label class="zoomCtl" title="Zoom (spacing per scene)">Zoom
+              <input type="range" id="chronZoom" min="70" max="200" step="10">
+            </label>
+            <button class="btn addSceneBtn" id="addSceneChron">+ Scene</button>
+          </div>
         </div>
         <div id="chronBody">
           <div id="laneLabels"></div>
-          <div id="track"></div>
+          <div id="chronScroll"><div id="track"></div></div>
         </div>
       </div>
 
@@ -67,7 +72,7 @@
           <div class="sectionLabel">MANUSCRIPT — what the reader gets, in order</div>
           <button class="btn addSceneBtn" id="addSceneMs">+ Scene</button>
         </div>
-        <div id="msRow"></div>
+        <div id="msScroll"><div id="msRow"></div></div>
       </div>
 
       <div id="braidSection" class="viewMode" data-view="braid">

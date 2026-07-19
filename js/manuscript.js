@@ -169,6 +169,19 @@ function _msDragFinish() {
   });
 }
 
+/* §7.6/§8.1: real horizontal scroll container, matching chronology's chronTrackWidth()
+   approach — row width = max(container width, N * pxPerScene + padding), cards fixed
+   width (never shrink below 110px, per §7.6's "cards never drop below readable size"). */
+function msRowWidth(rowEl) {
+  var scrollEl = rowEl.parentElement;
+  var containerW = (scrollEl && scrollEl.clientWidth) || rowEl.clientWidth || 0;
+  var n = (P && P.msOrder && P.msOrder.length) || 0;
+  var pxPerScene = (P && P.viewPrefs && P.viewPrefs.pxPerScene) || 110;
+  var PADDING = 20;
+  var needed = n * pxPerScene + PADDING;
+  return Math.max(containerW, needed);
+}
+
 function renderManuscript() {
   var row = document.getElementById('msRow');
   if (!row || !P) return;
@@ -204,6 +217,12 @@ function renderManuscript() {
   });
 
   endDividers.forEach(function (d) { row.appendChild(buildDividerEl(d)); });
+
+  // Size the row (px) after content is built, and give each card a fixed width driven
+  // by the shared zoom setting — no wrap, so the row scrolls in #msScroll instead.
+  row.style.width = msRowWidth(row) + 'px';
+  var cardW = Math.max(110, ((P.viewPrefs && P.viewPrefs.pxPerScene) || 110) - 8);
+  row.querySelectorAll('.msCard').forEach(function (el) { el.style.width = cardW + 'px'; });
 }
 
 function buildMsCard(s, index, storylineById, baselineYear) {

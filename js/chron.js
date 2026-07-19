@@ -18,10 +18,20 @@ var _chronDragOccurred = false; // set true after an active drag ends, so the ca
                                  // mouseup) doesn't also select the scene.
 var _chronTrueScaleToastShown = false;
 
-/* Track width computation stays isolated here so M7's zoom/scroll can replace it later
-   without touching the rest of the renderer. For M3 the track just fills its container. */
+/* §7.6: track width = max(scroll-container width, N * pxPerScene + padding).
+   trackEl is #track; its scroll container is the parent (#chronScroll). pxPerScene
+   defaults to 110 and is adjustable via the zoom slider (viewPrefs.pxPerScene, 70-200).
+   When content fits the container, this returns the container's own width (no
+   scrollbar) and the slider still visibly spreads/tightens spacing since collision-pass
+   minGap in time.js is computed against this same width. */
 function chronTrackWidth(trackEl) {
-  return trackEl.clientWidth;
+  var scrollEl = trackEl.parentElement;
+  var containerW = (scrollEl && scrollEl.clientWidth) || trackEl.clientWidth || 0;
+  var n = (P && P.chronOrder && P.chronOrder.length) || 0;
+  var pxPerScene = (P && P.viewPrefs && P.viewPrefs.pxPerScene) || 110;
+  var PADDING = 80; // room for card half-widths at the track's own edges
+  var needed = n * pxPerScene + PADDING;
+  return Math.max(containerW, needed);
 }
 
 /* Wired once (not per-render) since #track is a persistent DOM node reused across
@@ -275,6 +285,9 @@ function renderChron() {
   var cardW = fullChron ? 140 : 96;
 
   track.style.height = (laneCount * laneH) + 'px';
+  // §7.6: size the track (in px) BEFORE computing xMap, since the true-scale collision
+  // pass (time.js) reads #track's clientWidth to compute the minimum on-screen gap.
+  track.style.width = chronTrackWidth(track) + 'px';
 
   // lane labels + lane rows
   P.storylines.forEach(function (st, i) {
@@ -315,6 +328,11 @@ function renderChron() {
   // CSS for layout and as attributes below so the SVG's own coordinate system matches).
   threadSvg.style.width = '100%';
   threadSvg.style.height = '100%';
+  // Explicit width/height ATTRIBUTES (not just CSS) so the SVG's own coordinate system
+  // is never left to the UA's 300x150 replaced-element default — this matters more now
+  // that #track's pixel size changes with the zoom slider (§7.6) instead of being fixed.
+  threadSvg.setAttribute('width', chronTrackWidth(track));
+  threadSvg.setAttribute('height', laneCount * laneH);
   threadSvg.style.zIndex = '1';
   threadSvg.style.pointerEvents = 'none';
   track.appendChild(threadSvg);
@@ -404,6 +422,55 @@ function renderChron() {
 
   renderChronMarkers(markersLayer, xMap);
   renderChronThread(threadSvg);
+  renderChronGapDivider(markersLayer, xMap);
+
+  // zoom slider (§7.6) — keep it in sync with viewPrefs.pxPerScene on every render.
+  var zoomEl = document.getElementById('chronZoom');
+  if (zoomEl && document.activeElement !== zoomEl) {
+    zoomEl.value = (P.viewPrefs && P.viewPrefs.pxPerScene) || 110;
+  }
+
+  // axis toggle availability (§6.2 step 2) — gray out True scale with a tooltip when
+  // fewer than 2 scenes are anchored to dates.
+  updateAxisAvailability();
+}
+
+/* §6.2 step 2: "Anchor at least two scenes to dates to enable true scale." */
+function updateAxisAvailability() {
+  var btn = document.querySelector('#axisSwitcher button[data-axis="true"]');
+  if (!btn || !P) return;
+  var anchoredCount = P.scenes.filter(function (s) { return s.anchor && s.anchor.date; }).length;
+  var available = anchoredCount >= 2;
+  btn.disabled = !available;
+  btn.title = available ? '' : 'Anchor at least two scenes to dates to enable true scale.';
+  if (!available && P.viewPrefs.axis === 'true') {
+    // True scale was selected but is no longer available (e.g. anchors cleared) —
+    // fall back to ordinal so callers never render against an unavailable axis.
+    P.viewPrefs.axis = 'ordinal';
+    document.querySelectorAll('#axisSwitcher button').forEach(function (b) {
+      b.classList.toggle('on', b.dataset.axis === 'ordinal');
+    });
+  }
+}
+
+/* §7.2: in true-scale mode, if the largest gap between consecutive anchored scenes
+   exceeds 5x the median gap, render a vertical dashed divider with an fmtGap() label. */
+function renderChronGapDivider(layer, xMap) {
+  var existing = layer.querySelector('.gapDivider');
+  if (existing) existing.remove();
+  if (P.viewPrefs.axis !== 'true') return;
+  if (typeof chronTrueScaleGapDivider !== 'function') return;
+  var gap = chronTrueScaleGapDivider(P, xMap);
+  if (!gap) return;
+
+  var el = document.createElement('div');
+  el.className = 'gapDivider';
+  el.style.left = gap.x + '%';
+  var label = document.createElement('div');
+  label.className = 'gapLabel';
+  label.textContent = fmtGap(gap.ms);
+  el.appendChild(label);
+  layer.appendChild(el);
 }
 
 /* ---------------- hover (§10.1) ----------------
@@ -421,6 +488,7 @@ function selectScene(sceneId, opts) {
     el.classList.toggle('sel', el.dataset.sceneId === sceneId);
   });
   if (typeof renderInspectorSelection === 'function') renderInspectorSelection(sceneId, opts);
+  if (sceneId && typeof scrollCounterpartIntoView === 'function') scrollCounterpartIntoView(sceneId);
 }
 
 /* Escape / empty-space deselect wiring lives in editor-init.js which calls selectScene(null). */

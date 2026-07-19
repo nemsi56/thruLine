@@ -88,3 +88,46 @@ function redrawWires() {
 }
 
 window.addEventListener('resize', redrawWires);
+
+/* §7.6: both strips' scroll events must trigger redrawWires(), throttled via
+   requestAnimationFrame (same pattern as the ResizeObserver throttle on #stage in
+   editor-init.js, but rAF instead of a timeout since scroll fires much more often). */
+var _wiresScrollRafPending = false;
+function _onStripScroll() {
+  if (_wiresScrollRafPending) return;
+  _wiresScrollRafPending = true;
+  requestAnimationFrame(function () {
+    _wiresScrollRafPending = false;
+    redrawWires();
+  });
+}
+function initWireScrollListeners() {
+  var chronScroll = document.getElementById('chronScroll');
+  var msScroll = document.getElementById('msScroll');
+  if (chronScroll) chronScroll.addEventListener('scroll', _onStripScroll);
+  if (msScroll) msScroll.addEventListener('scroll', _onStripScroll);
+}
+
+/* §7.6 counterpart auto-scroll: when a scene is selected, if its card in a strip is
+   outside that strip's viewport, smooth-scroll that strip to center it. Checked for
+   BOTH strips (not just "the other one") since selectScene() doesn't know which strip
+   originated the click — the originating card is normally already in view, so this is
+   a no-op there and only the actual counterpart moves. */
+function scrollCounterpartIntoView(sceneId) {
+  _scrollCardIntoView(document.getElementById('chronScroll'),
+    document.querySelector('.scene[data-scene-id="' + sceneId + '"]'));
+  _scrollCardIntoView(document.getElementById('msScroll'),
+    document.querySelector('.msCard[data-scene-id="' + sceneId + '"]'));
+}
+
+function _scrollCardIntoView(scrollEl, cardEl) {
+  if (!scrollEl || !cardEl) return;
+  var sr = scrollEl.getBoundingClientRect();
+  var cr = cardEl.getBoundingClientRect();
+  if (cr.left >= sr.left && cr.right <= sr.right) return; // already fully in view
+  var cardCenter = cardEl.offsetLeft + cardEl.offsetWidth / 2;
+  var target = cardCenter - scrollEl.clientWidth / 2;
+  var maxScroll = scrollEl.scrollWidth - scrollEl.clientWidth;
+  target = Math.max(0, Math.min(maxScroll, target));
+  scrollEl.scrollTo({ left: target, behavior: 'smooth' });
+}
