@@ -626,6 +626,11 @@ message and touch nothing:
   `paletteIndex` an integer 0–9; `chronOrder`/`msOrder` satisfy §4.3
   invariants; anchors match `YYYY-MM-DD` / `HH:MM`; `durationMin`/`offsetMin` are
   positive integers via `Number.isInteger`; every user-text field is a string.
+  ("Every user-text field" means every one — an early implementation only checked
+  scene title/summary and marker/divider labels; storyline/character/location/reveal
+  names had no type check at all. Fixed in the M10 audit. If you're implementing this
+  rule fresh, enumerate every user-text field explicitly rather than trusting an
+  earlier pass caught them all.)
 - Repairable oddities (unknown extra fields) are dropped silently.
 
 If `projectUid` matches an existing project: compare `revision` and offer

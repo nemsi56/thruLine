@@ -2,7 +2,7 @@
 'use strict';
 
 (function () {
-  // theme (global pref) applied here even though the toggle UI is a later milestone
+  // theme (global pref) applied here; the toggle control itself lives only in editor.html (§3.3)
   document.documentElement.setAttribute('data-theme', getPrefs().theme === 'light' ? 'light' : 'dark');
 
   seedSampleProjectIfNeeded(function () {

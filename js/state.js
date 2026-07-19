@@ -146,7 +146,7 @@ function enforceInvariants(P) {
   });
 }
 
-/* ---------------- mutation helpers used by later milestones ---------------- */
+/* ---------------- mutation helpers (used by inspector.js, chron.js, manuscript.js) ---------------- */
 
 function deleteScene(P, sceneId) {
   // Capture each order's ORIGINAL index of sceneId before it's filtered out below —
@@ -410,6 +410,7 @@ function validateProject(obj) {
     if (!st || !isStr(st.id)) { fail('Storyline missing string id.'); return; }
     if (storylineIds[st.id]) fail('Duplicate storyline id: ' + st.id);
     storylineIds[st.id] = true;
+    if (!isStr(st.name)) fail('Storyline ' + st.id + ' name must be a string.');
     if (!Number.isInteger(st.paletteIndex) || st.paletteIndex < 0 || st.paletteIndex > 9) fail('Storyline ' + st.id + ' paletteIndex must be an integer 0-9.');
   });
 
@@ -418,6 +419,7 @@ function validateProject(obj) {
     if (!c || !isStr(c.id)) { fail('Character missing string id.'); return; }
     if (characterIds[c.id]) fail('Duplicate character id: ' + c.id);
     characterIds[c.id] = true;
+    if (!isStr(c.name)) fail('Character ' + c.id + ' name must be a string.');
   });
 
   var locationIds = {};
@@ -425,6 +427,7 @@ function validateProject(obj) {
     if (!l || !isStr(l.id)) { fail('Location missing string id.'); return; }
     if (locationIds[l.id]) fail('Duplicate location id: ' + l.id);
     locationIds[l.id] = true;
+    if (!isStr(l.name)) fail('Location ' + l.id + ' name must be a string.');
   });
 
   var revealIds = {};
@@ -432,6 +435,7 @@ function validateProject(obj) {
     if (!r || !isStr(r.id)) { fail('Reveal missing string id.'); return; }
     if (revealIds[r.id]) fail('Duplicate reveal id: ' + r.id);
     revealIds[r.id] = true;
+    if (!isStr(r.label)) fail('Reveal ' + r.id + ' label must be a string.');
   });
 
   var constraintIds = {};

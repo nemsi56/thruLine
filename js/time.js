@@ -40,7 +40,7 @@ function anchorTs(anchor) {
       those neighbors' x values; before-first/after-last extend outward in steps of 3
       (clamped to [0,100]).
    5. Anchored scenes out of order vs. chronOrder still render — position is purely by
-      timestamp; no conflict detection here (§12.1 is a separate, later milestone).
+      timestamp; conflict detection for this case lives separately in conflicts.js (§12.1).
    6. Collision pass per lane: sort by x, sweep left->right enforcing a minimum gap. */
 function chronXTrueScale(project) {
   var order = project.chronOrder || [];
